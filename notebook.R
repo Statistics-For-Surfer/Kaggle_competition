@@ -5,36 +5,43 @@ rm(list = ls())
 test_set_vero <- read.csv("test.csv")
 train_set <- read.csv("train.csv")
 
-train_set$x_2 <- (train_set$x )^ 2
-train_set$x_3 <- (train_set$x) ^ 3
-train_set$x_4 <- (train_set$x )^ 4
-train_set$x_5 <- (train_set$x) ^ 5
-train_set$x_6 <- (train_set$x )^ 6
-train_set$x_7 <- (train_set$x )^ 7
-train_set$x_8 <- (train_set$x )^ 8
-train_set$x_9 <- (train_set$x )^ 9
-test_set_vero$x_2 <- (test_set_vero$x )^ 2
-test_set_vero$x_3 <- (test_set_vero$x) ^ 3
-test_set_vero$x_4 <- (test_set_vero$x )^ 4
-test_set_vero$x_5 <- (test_set_vero$x) ^ 5
-test_set_vero$x_6 <- (test_set_vero$x )^ 6
-test_set_vero$x_7 <- (test_set_vero$x) ^ 7
-test_set_vero$x_8 <- (test_set_vero$x) ^ 8
-test_set_vero$x_9 <- (test_set_vero$x) ^ 9
+
+d <- 3
+q <- 3
+knots <- seq(0.1,0.9, length.out = 3)
+xs <- seq(0,1,by = 0.01)
+power_functions <- function(d , q , knots , x){
+  
+  X <- matrix(NA , length(x) , d +q + 1)
+  for( i in 1:length(x)){
+    
+    for(j in 1:(d +q + 1)){
+      
+      if ( j <= d + 1){
+        X[i,j] <- x[i]^(j-1)
+        }
+      
+      else
+        if(  (x[i] - knots[j - (d + 1)])^d > 0){
+          X[i,j] <- (x[i] - knots[j - (d + 1)])^d 
+        }
+        else 
+          X[i,j] <- 0
+  }
+  }
+  return(X)
+}
+M <- power_functions(d = d , q = q , knots = knots, x = xs)
+
+plot(M[,7])
+
+
+plot(train_set$x, train_set$y)
 
 
 
-plot(train_set$x,train_set$y) 
-length(train_set$x)
-model <- lm( y ~  . , data = train_set)
 
 
-pred <-predict(model, test_set_vero )
-points(test_set_vero$x , pred , col = 'red')
-
-
-
-dataset <- data.frame(id = test_set_vero$id , target = pred)
 
 write.csv(dataset, "predictions.csv", row.names=FALSE)
 
