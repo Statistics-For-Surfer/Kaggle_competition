@@ -8,10 +8,9 @@ train_set <- read.csv("train.csv")
 
 d <- 3
 q <- 3
-knots <- seq(0.1,0.9, length.out = 3)
+qs <- quantile(train_set$x , probs =  c(.33,.66,1) )  # Per ora
 xs <- seq(0,1,by = 0.01)
 power_functions <- function(d , q , knots , x){
-  
   X <- matrix(NA , length(x) , d +q + 1)
   for( i in 1:length(x)){
     
@@ -32,16 +31,22 @@ power_functions <- function(d , q , knots , x){
   return(X)
 }
 M <- power_functions(d = d , q = q , knots = qs, x = train_set$x  )
+M_train <- data.frame(target =train_set$y , M )
+M_test <- power_functions(d = d , q = q , knots = qs, x = test_set_vero$x )
+M_test <- data.frame(M_test)
+str(M_test)
+model <- lm(target ~ . , data = M_train)
+
+
+predictions <- predict(model,M_test)
+plot(train_set$x,M_train$target)
+points(test_set_vero$x,predictions, col = "red")
 
 
 
-plot(train_set$x, train_set$y)
 
-qs <- quantile(train_set$x , probs =  c(.33,.66,1) )  # Per ora
 
-first_points <- train_set$x[train_set$x <= qs[1]]
-second_points <- train_set$x[train_set$x > qs[1] & train_set$x <= qs[2]]
-third_points <- train_set$x[train_set$x > qs[2] & train_set$x <= qs[3]]
+
 
 
 
