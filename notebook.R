@@ -31,12 +31,17 @@ power_functions <- function(d , q , knots , x){
   }
   return(X)
 }
-M <- power_functions(d = d , q = q , knots = knots, x = xs)
+M <- power_functions(d = d , q = q , knots = qs, x = train_set$x  )
 
-plot(M[,7])
 
 
 plot(train_set$x, train_set$y)
+
+qs <- quantile(train_set$x , probs =  c(.33,.66,1) )  # Per ora
+
+first_points <- train_set$x[train_set$x <= qs[1]]
+second_points <- train_set$x[train_set$x > qs[1] & train_set$x <= qs[2]]
+third_points <- train_set$x[train_set$x > qs[2] & train_set$x <= qs[3]]
 
 
 
