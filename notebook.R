@@ -123,7 +123,8 @@ p_best <- positions[best_conf_ind[3]]
 #for (el in enum(a)){
 #  print(el)
 #}
-knots <- seq(0.1, positions[p_best] , length.out = q_best)
+
+knots <- seq(0.1, p_best , length.out = q_best)
 M <- power_functions(d = d_best , q = q_best , knots = knots, x = train_set$x  )
 
 M_train <- data.frame(target =train_set$y , M )
@@ -136,9 +137,9 @@ final_model <- lm(target ~ . , data = M_train)
 
 
 predictions <- predict(final_model,M_test)
-plot(train_set$x,M_train$target)
-points(test_set_vero$x,predictions, col = "red")
-
+plot(train_set$x,M_train$target,cex = .4, pch = 16 , col = "Green")
+points(test_set_vero$x,predictions, col = "lightblue" , cex = .4)
+deviance(final_model)
 
 
 dataset <- data.frame(id = test_set_vero$id , target = predictions )
