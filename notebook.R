@@ -13,7 +13,7 @@ train_set <- read.csv("train.csv")
 
 
 # Parameters --------------------------------------------------------------
-k <- c(5, 9)
+k <- 9
 d_grid <- c(1,3) 
 q_grid <- c(3,4,5,6,7,8,9,10)
 positions <- c(0.3,0.4,0.5,0.7, .9)
@@ -114,8 +114,9 @@ points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 deviance(final_model)
 
 
-dataset <- data.frame(id = test_set_vero$id , target = predictions )
-
+dataset <- data.frame(id = test_set_vero$id , target = predictions[2] )
+names(dataset)
+str(predictions)
 best_params
 
 write.csv(dataset, "predictions.csv", row.names=FALSE)
