@@ -1,7 +1,9 @@
 rm(list = ls())
 
+# Set reproducibility -----------------------------------------------------
 seed <- 1234
 set.seed(seed) 
+
 
 
 # Libraries and Data ---------------------------------------------------------------
@@ -12,14 +14,15 @@ test_set_vero <- read.csv("test.csv")
 train_set <- read.csv("train.csv")
 
 
-# Parameters --------------------------------------------------------------
 
+# Parameters --------------------------------------------------------------
 k <- c(5, 9)
 d_grid <- c(1, 3) 
 q_grid <- seq(3, 20, 1)
 #positions <- c(0.3,0.4,0.5,0.7, .9)
 lambdas <- 10^seq(-3, -1, .5)
 alphas <- c(0, 1)
+
 
 
 # Functions ---------------------------------------------------------------
@@ -110,18 +113,52 @@ final_model <- glmnet(M_train, train_set$y, family ="gaussian", alpha=a_best, la
 predictions <- predict(final_model,M_test)
 
 
+
 # Plot --------------------------------------------------------------------
+
+# Simple plot
 plot(train_set$x,train_set$y,cex = .5, pch = 16, col = "Green")
 points(test_set_vero$x,predictions, col = "blue", cex = .5, pch=16)
 grid()
 points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
 
+# More beautiful plot ;)
 
+# install.packages('tidyverse')
+# install.packages('manipulate')
+# 
+# library(tidyverse)
+# library(manipulate)
+# 
+# colors <- c("Real Data" = "green", "Predicted" = "blue", "Knots" = "red")
+# green_point_size <- 1.3
+# blue_point_size <- 1.3
+# red_cross_size <- 2
+# 
+# plot_fun <- function(x_min, x_max){
+#   ggplot() +
+#     geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = green_point_size, shape=16) +
+#     geom_point(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = blue_point_size) + 
+#     geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = 4, stroke = 1.7, size = red_cross_size) + 
+#     theme_minimal() +
+#     labs(x = "x", y = "y", color = "Legend", title = 'Prediction on WMAP data', shape = "", color="") +
+#     scale_color_manual(values = colors) +
+#     theme(legend.title = element_text(size=12), legend.text = element_text(size=11), plot.title = element_text(hjust = 0.5)) + 
+#     coord_cartesian(xlim = c(x_min, x_max))+
+#     guides(color = guide_legend(override.aes=list(shape = c(4, 16, 16), size = 2)))}
+# 
+# manipulate(plot_fun(x.min, x.max), x.min = slider(0,.9, 0, step = .1), x.max = slider(.1, 1, 1, step = .1))
+
+
+
+
+# Output ------------------------------------------------------------------
+
+best_params
 deviance(final_model)
 
 
 dataset <- data.frame(id = test_set_vero$id, target = predictions[2])
-best_params
 
 write.csv(dataset, "predictions.csv", row.names=FALSE)
