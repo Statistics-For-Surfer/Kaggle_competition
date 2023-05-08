@@ -4,8 +4,6 @@ rm(list = ls())
 seed <- 1234
 set.seed(seed) 
 
-
-
 # Libraries and Data ---------------------------------------------------------------
 library(glmnet)
 library(NMOF)
@@ -14,7 +12,6 @@ library(snow)
 
 test_set_vero <- read.csv("test.csv")
 train_set <- read.csv("train.csv")
-
 
 quant <- range(quantile(train_set$y, c(0.25, 0.75)))
 Lower <- quant[1] - 1.5*(diff(quant))
@@ -81,7 +78,7 @@ cross_val_func <- function(x){
   return(mean(score))
 }
 
-
+# Main function for the nested CV
 nested_crossval <- function(x){
   d <- x[1]
   q <- x[2]
@@ -128,6 +125,7 @@ nested_crossval <- function(x){
   return(mse)
 }
 
+# Secondary function for nested CV
 inner_crossval <- function(x, train_set){
   d <- x[1]
   q <- x[2]
@@ -160,15 +158,12 @@ inner_crossval <- function(x, train_set){
 }
 
 
-aux <- nested_crossval(c(1,10,4,0,0.1))
-
 # Parameters -------------------------------------------------------------
-
 k <- c(4)
 d_grid <- c(1, 3) 
 q_grid <- seq(8, 12, 1)
 #positions <- c(0.3, 0.4, 0.5, 0.7)
-lambdas <- 10^seq(-2.5, -1.5, .25)
+lambdas <- 10^seq(-3, -1, .5)
 alphas <- seq(0, 1)
 
 # Set the parameter for the CV
