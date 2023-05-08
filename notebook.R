@@ -86,7 +86,7 @@ nested_crossval <- function(x){
   a <- x[4]
   l <- x[5] 
   #p <- x[6]
-  R <- 100
+  R <- 10
   l_folds <<- nrow(train_set) / K
   
   #es <- c()
@@ -163,7 +163,7 @@ k <- c(4)
 d_grid <- c(1, 3) 
 q_grid <- seq(8, 12, 1)
 #positions <- c(0.3, 0.4, 0.5, 0.7)
-lambdas <- 10^seq(-3, -1, .5)
+lambdas <- 10^seq(-2.5, -1.5, .25)
 alphas <- seq(0, 1)
 
 # Set the parameter for the CV
@@ -185,7 +185,7 @@ clusterExport(cl, c('train_set', 'inner_crossval', 'power_functions', 'glmnet'))
 res <- gridSearch(nested_crossval, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
-names(best_params1) <- c('d', 'q', 'k', 'alpha', 'lambda')
+names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda')
 
 
 # Prediction --------------------------------------------------------------
