@@ -46,27 +46,17 @@ power_functions <- function(d, q, knots, x){
 # Function to estimate the weights
 compute_weights <- function(knots , dataset){
   n <- length(knots)
-  v <- rep(NA , n)
-  xx <- c()
+  knots <- c(0, knots, 1)
+  xx <- rep(NA, length(dataset$x))
   
-  # compute the varince
-  for(i in 1:n){
-    if(i == 1){
-      v <- var(dataset$y[dataset$x < knots[i]])
-      xx <- c(xx, rep( 1/ v , sum(dataset$x < knots[i])))
-    }
-    else{
-      v  <- var(dataset$y[dataset$x > knots[i-1] & dataset$x < knots[i]])
-      xx <- c(xx, rep(1 / v , sum(dataset$x > knots[i-1] & dataset$x < knots[i])))
-    }
-    
+  # compute the variance
+  for(i in 1:(n+1)){
+    v  <- var(dataset$y[dataset$x >= knots[i] & dataset$x < knots[i+1]])
+    xx[dataset$x >= knots[i] & dataset$x < knots[i+1]] <- 1 / v
   }
-  v <- var(dataset$y[dataset$x > knots[n]])
-  xx <- c(xx, rep( 1 / v, sum(dataset$x > knots[n])))
   
   return(xx)
 }
-
 
 # Function used for the cross validation
 cross_val_func <- function(x){
@@ -110,6 +100,47 @@ cross_val_func <- function(x){
   return(mean(score))
 }
 
+
+# Secondary function for nested CV
+inner_crossval <- function(x, train_set){
+  d <- x[1]
+  q <- x[2]
+  K <- x[3]
+  a <- x[4]
+  l <- x[5] 
+  #p <- x[6]
+  
+  e_in <- c()
+  
+  for(k in (1:(K-1))){
+    idx <- ((k-1)*l_folds+1): (k*l_folds)
+    cv_test <- train_set[idx,]
+    cv_train <- train_set[-idx,]
+    
+    if(q == 0) knots <- c()
+    else knots <- seq(1/q, 0.8, length.out=q)
+    
+    M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
+    M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
+    
+    hat_weights <- compute_weights(knots = knots , cv_train)
+      
+    cv_model <- glmnet(M_cv_train, 
+                       cv_train$y,
+                       family = "gaussian", 
+                       alpha=a, 
+                       lambda=l,
+                       weights = hat_weights)
+    
+    cv_predictions <- predict(cv_model, M_cv_test)
+    
+    e_temp <- (cv_test$y-cv_predictions)^2
+    e_in <- c(e_in, e_temp)
+  }
+  
+  return(e_in)
+}
+
 # Main function for the nested CV
 nested_crossval <- function(x){
   d <- x[1]
@@ -141,7 +172,15 @@ nested_crossval <- function(x){
       M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
       M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
       
-      cv_model <- glmnet(M_cv_train, cv_train$y,family = "gaussian", alpha=a, lambda=l)
+      hat_weights <- compute_weights(knots = knots , cv_train)
+      
+      cv_model <- glmnet(M_cv_train, 
+                         cv_train$y,
+                         family = "gaussian", 
+                         alpha=a, 
+                         lambda=l,
+                         weights = hat_weights)
+      
       cv_predictions <- predict(cv_model, M_cv_test)
       
       e_out <- (cv_test$y-cv_predictions)^2
@@ -157,45 +196,11 @@ nested_crossval <- function(x){
   return(mse)
 }
 
-# Secondary function for nested CV
-inner_crossval <- function(x, train_set){
-  d <- x[1]
-  q <- x[2]
-  K <- x[3]
-  a <- x[4]
-  l <- x[5] 
-  #p <- x[6]
-  
-  e_in <- c()
-  
-  for(k in (1:(K-1))){
-    idx <- ((k-1)*l_folds+1): (k*l_folds)
-    cv_test <- train_set[idx,]
-    cv_train <- train_set[-idx,]
-    
-    if(q == 0) knots <- c()
-    else knots <- seq(1/q, 0.8, length.out=q)
-    
-    M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
-    M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
-    
-    weights = 
-    
-    cv_model <- glmnet(M_cv_train, cv_train$y,family = "gaussian", alpha=a, lambda=l)
-    cv_predictions <- predict(cv_model, M_cv_test)
-    
-    e_temp <- (cv_test$y-cv_predictions)^2
-    e_in <- c(e_in, e_temp)
-  }
-  
-  return(e_in)
-}
-
 
 # Parameters -------------------------------------------------------------
 k <- c(4)
 d_grid <- c(1, 3) 
-q_grid <- seq(8, 12, 1)
+q_grid <- seq(10, 20, 2)
 #positions <- c(0.3, 0.4, 0.5, 0.7)
 lambdas <- 10^seq(-2.5, -1.5, .25)
 alphas <- seq(0, 1)
@@ -213,9 +218,10 @@ best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda')
 
 
+# TODO Update Parameters(?) -------------------------------------------------------------
 # CV nested --------------------------------------------------------------
 cl = makeCluster(detectCores())
-clusterExport(cl, c('train_set', 'inner_crossval', 'power_functions', 'glmnet'))
+clusterExport(cl, c('train_set','compute_weights' ,'inner_crossval', 'power_functions', 'glmnet'))
 res <- gridSearch(nested_crossval, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
@@ -291,11 +297,3 @@ deviance(final_model)
 dataset <- data.frame(id = test_set_vero$id, target = predictions[2])
 
 write.csv(dataset, "predictions.csv", row.names=FALSE)
-
-
-
-# Voglio len(trainset) pesi in modo tale che i pesi sono l'inverso(?) della varianza delle y tra il nodo i e il nodo i + 1
-
-
-
-
