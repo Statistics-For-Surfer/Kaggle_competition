@@ -43,6 +43,31 @@ power_functions <- function(d, q, knots, x){
   return(X)
 }
 
+# Function to estimate the weights
+compute_weights <- function(knots , dataset){
+  n <- length(knots)
+  v <- rep(NA , n)
+  xx <- c()
+  
+  # compute the varince
+  for(i in 1:n){
+    if(i == 1){
+      v <- var(dataset$y[dataset$x < knots[i]])
+      xx <- c(xx, rep( 1/ v , sum(dataset$x < knots[i])))
+    }
+    else{
+      v  <- var(dataset$y[dataset$x > knots[i-1] & dataset$x < knots[i]])
+      xx <- c(xx, rep(1 / v , sum(dataset$x > knots[i-1] & dataset$x < knots[i])))
+    }
+    
+  }
+  v <- var(dataset$y[dataset$x > knots[n]])
+  xx <- c(xx, rep( 1 / v, sum(dataset$x > knots[n])))
+  
+  return(xx)
+}
+
+
 # Function used for the cross validation
 cross_val_func <- function(x){
   d <- x[1]
@@ -61,14 +86,21 @@ cross_val_func <- function(x){
     cv_train <- train_set[-idx,]
     
     
-    knots <- seq(1/q, 1 , length.out=q)
+    knots <- seq(1/q, 0.8 , length.out=q)
     
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     # M_cv_train <- data.frame(M_cv_train , target = cv_train$y)
     
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
 
-    cv_model <- glmnet(M_cv_train, cv_train$y,family = "gaussian", alpha=a, lambda=l)
+    hat_weights <- compute_weights(knots = knots , cv_train)
+    
+    cv_model <- glmnet(M_cv_train, 
+                       cv_train$y,
+                       family = "gaussian", 
+                       alpha=a, 
+                       lambda=l,
+                       weights = hat_weights)
     
     cv_predictions <- predict(cv_model, M_cv_test)
     
@@ -147,6 +179,8 @@ inner_crossval <- function(x, train_set){
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
     
+    weights = 
+    
     cv_model <- glmnet(M_cv_train, cv_train$y,family = "gaussian", alpha=a, lambda=l)
     cv_predictions <- predict(cv_model, M_cv_test)
     
@@ -172,7 +206,7 @@ parameters <- list(d_grid, q_grid, k, alphas, lambdas)
 # CV vanilla --------------------------------------------------------------
 # Select the best combination of parameters
 cl = makeCluster(detectCores())
-clusterExport(cl, c('train_set', 'power_functions', 'glmnet'))
+clusterExport(cl, c('train_set', 'power_functions', 'glmnet', 'compute_weights'))
 res <- gridSearch(cross_val_func, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
@@ -203,7 +237,8 @@ knots <- seq(1/q_best, 0.8, length.out=q_best)
 M_train <- power_functions(d = d_best, q = q_best, knots = knots, x = train_set$x)
 M_test <- power_functions( d = d_best, q = q_best, knots = knots, x = test_set_vero$x)
 knots_test <- power_functions( d = d_best, q = q_best, knots = knots, x = knots)
-final_model <- glmnet(M_train, train_set$y, family ="gaussian", alpha=a_best, lambda=l_best)
+hat_weights <- compute_weights(knots , train_set)
+final_model <- glmnet(M_train, train_set$y, family ="gaussian", alpha=a_best, lambda=l_best , weights = hat_weights )
 predictions <- predict(final_model,M_test)
 
 
@@ -256,3 +291,11 @@ deviance(final_model)
 dataset <- data.frame(id = test_set_vero$id, target = predictions[2])
 
 write.csv(dataset, "predictions.csv", row.names=FALSE)
+
+
+
+# Voglio len(trainset) pesi in modo tale che i pesi sono l'inverso(?) della varianza delle y tra il nodo i e il nodo i + 1
+
+
+
+
