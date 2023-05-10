@@ -50,7 +50,7 @@ invisible(lapply(pkt, require, character.only = TRUE))
 
 ## Implementation of the truncated power basis
 
-[TODO] [TODO] Spiegare perchè usiamo solo le potenze dispari
+[TODO] Spiegare perchè usiamo solo le potenze dispari
 
 ```{r power_function}
 
@@ -80,7 +80,7 @@ power_functions <- function(d, q, knots, x){
 
 [TODO Matteo]
 
-```{r plot truncated power function, fig.height = 5, fig.width = 9, fig.align = "center"}
+```{r plot truncated power function, fig.height = 5, fig.width = 9, fig.align = "center", warning=FALSE}
 par(col='white', col.axis='white', col.lab='#B8BCC2', col.main='#B8BCC2', fg='white', bg="#2B3E50")
 
 plot_func <- function(d, q){
@@ -120,6 +120,55 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 ```
 
 ## ChatGPT - Power function
+[TODOMatteo]  Vogliamo che i codici in questa sezione non vengano nascosti, come si fa? Se non riesci, basta un modo per mostrarlo come html (carino)
+
+Request:
+
+" Can you implement a function in r to compute the truncated power basis, with parameters d, q, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$ else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$? "
+
+Response:
+
+" Certainly! Here's a function in R that computes the truncated power basis you described:
+
+```{r, }
+truncated_power_basis <- function(x, d, q, knots) {
+  # Compute the first d+1 basis functions
+  basis <- matrix(0, nrow = length(x), ncol = d+1)
+  basis[,1] <- 1
+  for (i in 2:(d+1)) {
+    basis[,i] <- x^(i-1)
+  }
+  
+  # Compute the remaining basis functions using knots
+  for (j in 1:q) {
+    basis[,d+1+j] <- pmax((x - knots[j])^d, 0)
+  }
+  
+  return(basis)
+}
+```
+
+
+This function takes as input the vector x, the integer d, the integer q, and the vector knots. It returns a matrix with length(x) rows and d+1+q columns, where each column represents a basis function.
+
+To use this function, simply call truncated_power_basis(x, d, q, knots) with your desired inputs. For example, if you want to compute the truncated power basis with d=3, q=2, and knots=c(0.5, 1.5) for the vector x=c(0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4), you would call truncated_power_basis(x, 3, 2, c(0.5, 1.5)). "
+
+Let's try it!
+
+```{r GPtest, error=TRUE}
+
+d <- 1
+q <- 3
+knots <- seq(0, 1, length.out=q)
+x <- seq(0, 1, length.out=1000)
+
+M <- truncated_power_basis(x, d, q, knots)
+
+```
+
+Ops! Looks like the ChatBot response doesn't work.
+
+# TODO Finisci di scrivere evaluation
 
 ## Dataset
 
@@ -147,4 +196,80 @@ train_set <- train_set[(train_set$y > Lower)& (train_set$y < Upper),]
 
 ```
 
-## 
+## Vanilla Cross Validation
+
+```{r functions VCV}
+
+# Function to estimate the weights
+compute_weights <- function(knots , dataset){
+  # Number of knots
+  n <- length(knots)
+  # Add the bounds 
+  knots <- c(0, knots, 1)
+   # Define the matrix
+  xx <- rep(NA, length(dataset$x))
+  
+   # For each interval bounded by the knots
+  for(i in 1:(n+1)){
+    # Check if there are at least 2 data points inside the interval
+    if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1])>1){    
+      # Compute the conditional variance 
+      v  <- var(dataset$y[(dataset$x >= knots[i]) & (dataset$x <= knots[i+1])]) 
+      # Set the weight of the data points equal to the inverse of the variance
+      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1 / v              
+    } 
+    # If there is only one data point
+    else if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1]) == 1){  
+      # Since we can't compute the variance of a single data point then we use the previously computed variance
+      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1/v
+    }
+  }
+  
+  return(xx)
+}
+if(sum(NULL)){
+  print('cciao')
+}
+
+# Function used for the cross validation
+cross_val_func <- function(x){
+  d <- x[1]
+  q <- x[2]
+  k <- x[3]
+  a <- x[4]
+  l <- x[5] 
+  p <- x[6]
+  
+  # size of the fold
+  l_folds <- nrow(train_set) / k 
+  score <- rep(NA, k)
+  for ( i in 1:k){
+    idx <- ((i-1)*l_folds+1): (i*l_folds)
+    cv_test <- train_set[idx,]
+    cv_train <- train_set[-idx,]
+    
+    
+    knots <- seq(1/q, p, length.out=q)
+    
+    M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
+    # M_cv_train <- data.frame(M_cv_train , target = cv_train$y)
+    
+    M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
+
+    hat_weights <- compute_weights(knots = knots , cv_train)
+    
+    cv_model <- glmnet(M_cv_train, 
+                       cv_train$y,
+                       family = "gaussian", 
+                       alpha=a, 
+                       lambda=l,
+                       weights = hat_weights)
+    
+    cv_predictions <- predict(cv_model, M_cv_test)
+    
+    score[i] <- sqrt(mean((cv_test$y-cv_predictions)^2))
+    
+  }
+  return(mean(score))
+}
+```
