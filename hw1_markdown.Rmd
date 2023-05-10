@@ -80,7 +80,8 @@ power_functions <- function(d, q, knots, x){
 
 [TODO Matteo]
 
-```{r plot truncated power function}
+```{r plot truncated power function, fig.height = 5, fig.width = 9, fig.align = "center"}
+par(col='white', col.axis='white', col.lab='#B8BCC2', col.main='#B8BCC2', fg='white', bg="#2B3E50")
 
 plot_func <- function(d, q){
   knots <- seq(0, 1, length.out = q+2)[2 : (q+1)]
@@ -89,13 +90,21 @@ plot_func <- function(d, q){
   df <- melt(df,  id.vars = 'xx')
   
   graph <- ggplot(data=df, aes(x = xx, y = value, color = variable)) + 
-    geom_line(linewidth = 1.1) + 
-    ggtitle(paste0('Plot with d = ', d, ' and  q = ', q)) + 
+    geom_line(linewidth = 1) + 
+    ggtitle(paste0('Plot with d = ', d, ' and  q = ', q),) + 
     xlab('x') +
     ylab('y') +
     theme_light() + 
-    theme(panel.grid = element_blank(), legend.position = 'none')
-  
+    theme(panel.grid = element_blank(), legend.text = element_text(size = 4),
+          legend.background = element_rect(fill = "#2B3E50")) +  
+    
+    theme(
+      plot.background = element_rect(fill = "#2B3E50"), 
+      panel.background = element_rect(fill = "#2B3E50"),
+      title = element_text(colour = "white"),
+      axis.line = element_line(color = "white"),
+      axis.text = element_text(color = "white"))
+      
   return(graph)
 }
 
@@ -106,12 +115,7 @@ p2 <- plot_func(3, 3)
 p3 <- plot_func(1, 10)
 p4 <- plot_func(3, 10)
 
-grid.arrange(p1, p2, p3, p4, ncol=2)
-
-
-
-
-
+grid.arrange(p1, p2, p3, p4, ncol=2) 
 
 ```
 
