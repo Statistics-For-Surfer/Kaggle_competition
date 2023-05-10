@@ -1,0 +1,165 @@
+---
+title: "Statistical Learning, Homework-01"
+author: "Barba Paolo, Candi Matteo, Costantini Silvia, Vestini Maria Vittoria"
+date: '2023-05-10'
+
+
+
+output: 
+  html_document:
+    code_folding: hide
+    theme: 
+      color-contrast-warnings: false
+      bg: "#2B3E50"
+      fg: "#B8BCC2"
+      primary: "#EA80FC"
+      secondary: "#00DAC6"
+      base_font:
+      google: Prompt
+      heading_font:
+        google: Proza Libre
+---
+
+```{r setup, include=FALSE}
+if (requireNamespace("thematic")) 
+  thematic::thematic_rmd(font = "auto")
+```
+
+
+```{r package, message=FALSE}
+
+rm(list = ls())
+
+# Set reproducibility -----------------------------------------------------
+seed <- 1234
+set.seed(seed) 
+
+# Libraries and Data ---------------------------------------------------------------
+library(glmnet)
+library(NMOF)
+library(parallel)
+library(snow)
+
+```
+
+
+## Purpose & Statistical tools used
+
+
+[TODO]
+
+
+## Be linear in transformed feature space
+
+[TODO]
+
+
+
+## Implementation of the truncated power basis
+
+
+[TODO]
+[TODO] Spiegare perchè usiamo solo le potenze dispari
+```{r power_function}
+
+# Function used to compute the feature matrix
+power_functions <- function(d, q, knots, x){
+  X <- matrix(NA, length(x), d+q+1)  # Pre-set the feature matrix 
+  for( i in 1:length(x)){            # Loop over the data-points
+    
+    for( j in 1:(d+q+1) ){           # Loop over the basis used
+      
+      if ( j <= d+1 ){               # Check if the index belong to the firsts (d+1) indices  
+        X[i,j] <- x[i]^(j-1)         # Compute the powers
+      }
+      
+      else                           # The index do not belong to the firsts (d+1) indices  
+        if((x[i] - knots[j-(d+1)])^d > 0){      # Check if the power of the difference between the data-point and the knot is positive
+          X[i,j] <- (x[i] - knots[j-(d+1)])^d   # Compute the power of the difference
+        }
+      else                           # the power is not positive
+         X[i,j] <- 0                 # Set the value to 0
+    }   
+  }
+  return(X)                         # Return the feature matrix
+}
+
+```
+
+
+[TODO Màtteo]
+
+```{r plot truncated power function}
+d <- c(1 , 3)  # degree
+q <- c(3,10)  # Number of knots used
+par(mfrow = c(2,2))
+
+xx <- seq(0,1,length.out = 1000)
+knots <- seq(0 , 1 , length.out = q[1]+2)[2:(q[1]+1)]
+graph_1 <-power_functions( d[1],  q[1], knots, xx)
+plot(xx,graph_1[,2])
+  
+xx <- seq(0,1,length.out = 1000)
+knots <- seq(0 , 1 , length.out = q[2]+2)[2:(q[2]+1)]
+graph_1 <-power_functions( d[1],  q[2], knots, xx)
+plot(xx,graph_1[,7])
+
+
+xx <- seq(0,1,length.out = 1000)
+knots <- seq(0 , 1 , length.out = q[1]+2)[2:(q[1]+1)]
+graph_1 <-power_functions( d[2],  q[1], knots, xx)
+plot(xx,graph_1[,7])
+
+
+xx <- seq(0,1,length.out = 1000)
+knots <- seq(0 , 1 , length.out = q[2]+2)[2:(q[2]+1)]
+graph_1 <-power_functions( d[2],  q[2], knots, xx)
+plot(xx,graph_1[,7])
+
+
+
+
+
+```
+
+
+
+## ChatGPT - Power function
+
+
+
+ 
+## Dataset
+
+[TODO]
+
+```{r dataset}
+
+test_set_vero <- read.csv("test.csv")
+train_set <- read.csv("train.csv")
+
+```
+
+
+
+## Pre-processed
+
+[TODO]
+
+
+```{r data - preproocessing 1 , warning= FALSE , echo = FALSE , fig.width = 10}
+
+# Outlier Detection
+quant <- range(quantile(train_set$y, c(0.25, 0.75)))
+Lower <- quant[1] - 1.5*(diff(quant))
+Upper <- quant[2] + 1.5*(diff(quant))
+
+train_set <- train_set[(train_set$y > Lower)& (train_set$y < Upper),]
+
+```
+
+
+##
+
+
+
