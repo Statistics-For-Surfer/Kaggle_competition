@@ -1,7 +1,7 @@
 rm(list = ls())
 
 # Set reproducibility -----------------------------------------------------
-seed <- 1234
+seed <- 981126
 set.seed(seed) 
 
 # Libraries and Data ---------------------------------------------------------------
@@ -43,6 +43,7 @@ power_functions <- function(d, q, knots, x){
   return(X)
 }
 
+
 # Function to estimate the weights
 compute_weights <- function(knots , dataset){
   n <- length(knots)
@@ -51,11 +52,19 @@ compute_weights <- function(knots , dataset){
   
   # compute the variance
   for(i in 1:(n+1)){
-    v  <- var(dataset$y[dataset$x >= knots[i] & dataset$x < knots[i+1]])
-    xx[dataset$x >= knots[i] & dataset$x < knots[i+1]] <- 1 / v
+    if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1])>1){
+      v  <- var(dataset$y[(dataset$x >= knots[i]) & (dataset$x <= knots[i+1])])
+      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1 / v
+    }
+    else if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1]) == 1){
+      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1/v
+    }
   }
   
   return(xx)
+}
+if(sum(NULL)){
+  print('cciao')
 }
 
 # Function used for the cross validation
@@ -65,7 +74,7 @@ cross_val_func <- function(x){
   k <- x[3]
   a <- x[4]
   l <- x[5] 
-  #p <- x[6]
+  p <- x[6]
   
   # size of the fold
   l_folds <- nrow(train_set) / k 
@@ -76,7 +85,7 @@ cross_val_func <- function(x){
     cv_train <- train_set[-idx,]
     
     
-    knots <- seq(1/q, 0.8 , length.out=q)
+    knots <- seq(1/q, p, length.out=q)
     
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     # M_cv_train <- data.frame(M_cv_train , target = cv_train$y)
@@ -108,7 +117,7 @@ inner_crossval <- function(x, train_set){
   K <- x[3]
   a <- x[4]
   l <- x[5] 
-  #p <- x[6]
+  p <- x[6]
   
   e_in <- c()
   
@@ -117,8 +126,7 @@ inner_crossval <- function(x, train_set){
     cv_test <- train_set[idx,]
     cv_train <- train_set[-idx,]
     
-    if(q == 0) knots <- c()
-    else knots <- seq(1/q, 0.8, length.out=q)
+    knots <- seq(1/q, p, length.out=q)
     
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -148,7 +156,7 @@ nested_crossval <- function(x){
   K <- x[3]
   a <- x[4]
   l <- x[5] 
-  #p <- x[6]
+  p <- x[6]
   R <- 10
   l_folds <<- nrow(train_set) / K
   
@@ -166,8 +174,7 @@ nested_crossval <- function(x){
       e_in <- inner_crossval(x, cv_train)
       
       # Outer cross
-      if(q == 0) knots <- c()
-      else knots <- seq(1/q, 0.8, length.out=q)
+      knots <- seq(1/q, p, length.out=q)
      
       M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
       M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -199,14 +206,13 @@ nested_crossval <- function(x){
 
 # Parameters -------------------------------------------------------------
 k <- c(4)
-d_grid <- c(1, 3) 
-q_grid <- seq(10, 20, 2)
-#positions <- c(0.3, 0.4, 0.5, 0.7)
-lambdas <- 10^seq(-2.5, -1.5, .25)
+d_grid <- c(3) 
+q_grid <- seq(3, 30, 1)
+positions <- c(0.5, 0.6, 0.7, 0.8)
+lambdas <- 10^seq(-2.5, -1, .25)
 alphas <- seq(0, 1)
-
 # Set the parameter for the CV
-parameters <- list(d_grid, q_grid, k, alphas, lambdas)
+parameters <- list(d_grid, q_grid, k, alphas, lambdas, positions)
 
 # CV vanilla --------------------------------------------------------------
 # Select the best combination of parameters
@@ -215,17 +221,36 @@ clusterExport(cl, c('train_set', 'power_functions', 'glmnet', 'compute_weights')
 res <- gridSearch(cross_val_func, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
-names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda')
+names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 
 
-# TODO Update Parameters(?) -------------------------------------------------------------
+# Update Parameters -------------------------------------------------------------
+
+# Using the best parameters
+d_best <- best_params[1]
+q_best <- best_params[2]
+k_best <- best_params[3]
+a_best <- best_params[4]
+l_best <- best_params[5]
+p_best <- best_params[6]
+
+d <- d_best
+q <- q_best+seq(-2,2,1)
+k <- k_best
+a <- a_best
+l <- l_best + seq(-0.005,0.005,0.001)
+p <- p_best + seq(-0.05, 0.05, 0.025)
+
+# Set the parameter for the CV
+parameters <- list(d, q, k, a, l, p)
+
 # CV nested --------------------------------------------------------------
 cl = makeCluster(detectCores())
 clusterExport(cl, c('train_set','compute_weights' ,'inner_crossval', 'power_functions', 'glmnet'))
 res <- gridSearch(nested_crossval, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
-names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda')
+names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
 
 
 # Prediction --------------------------------------------------------------
@@ -236,15 +261,16 @@ q_best <- best_params[2]
 k_best <- best_params[3]
 a_best <- best_params[4]
 l_best <- best_params[5]
-#p_best <- best_params[6]
+p_best <- best_params[6]
 
 # Compute the predictions
-knots <- seq(1/q_best, 0.8, length.out=q_best)
+knots <- seq(1/q_best, p_best, length.out=q_best)
 M_train <- power_functions(d = d_best, q = q_best, knots = knots, x = train_set$x)
 M_test <- power_functions( d = d_best, q = q_best, knots = knots, x = test_set_vero$x)
 knots_test <- power_functions( d = d_best, q = q_best, knots = knots, x = knots)
 hat_weights <- compute_weights(knots , train_set)
-final_model <- glmnet(M_train, train_set$y, family ="gaussian", alpha=a_best, lambda=l_best , weights = hat_weights )
+final_model <- glmnet(M_train, train_set$y, family ="gaussian", 
+                      alpha=a_best, lambda=l_best , weights = hat_weights )
 predictions <- predict(final_model,M_test)
 
 
