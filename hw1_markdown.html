@@ -791,7 +791,7 @@ basis, with parameters d, q, knots. Where <span class="math inline">\(g_i=x^{i-1
 <p>Response:</p>
 <p>” Certainly! Here’s a function in R that computes the truncated power
 basis you described:</p>
-<pre class="r"><code>truncated_power_basis &lt;- function(x, d, q, knots) {
+<pre class="r fold-show"><code>truncated_power_basis &lt;- function(x, d, q, knots) {
   # Compute the first d+1 basis functions
   basis &lt;- matrix(0, nrow = length(x), ncol = d+1)
   basis[,1] &lt;- 1
@@ -815,7 +815,7 @@ truncated power basis with d=3, q=2, and knots=c(0.5, 1.5) for the
 vector x=c(0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4), you would call
 truncated_power_basis(x, 3, 2, c(0.5, 1.5)). ”</p>
 <p>Let’s try it!</p>
-<pre class="r"><code>d &lt;- 1
+<pre class="r fold-show"><code>d &lt;- 1
 q &lt;- 3
 knots &lt;- seq(0, 1, length.out=q)
 x &lt;- seq(0, 1, length.out=1000)

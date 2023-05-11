@@ -141,7 +141,8 @@ Response:
 
 " Certainly! Here's a function in R that computes the truncated power basis you described:
 
-```{r, }
+```{r, class.source = "fold-show"}
+
 truncated_power_basis <- function(x, d, q, knots) {
   # Compute the first d+1 basis functions
   basis <- matrix(0, nrow = length(x), ncol = d+1)
@@ -166,7 +167,7 @@ To use this function, simply call truncated_power_basis(x, d, q, knots) with you
 
 Let's try it!
 
-```{r GPtest, error=TRUE}
+```{r GPtest, error=TRUE, class.source = "fold-show"}
 
 d <- 1
 q <- 3
