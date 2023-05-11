@@ -451,7 +451,6 @@ names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 
 
 ```{r training with vanilla parameters, warning = FALSE}
-
 load("RData/best_params_vanilla.RData")
 # Prediction --------------------------------------------------------------
 
@@ -475,15 +474,34 @@ predictions <- predict(final_model,M_test)
 
 ```
 
-[TODOMatteo] Se vuoi metti il plot più figo
-```{r plot after vanilla , warning=FALSE}
 
-plot(train_set$x,train_set$y,cex = .5, pch = 16, col = "Green")
-points(test_set_vero$x,predictions, col = "orange", cex = .5, pch=16)
-grid()
-points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
+```{r plot after vanilla, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
+colors <- c("Real Data" = "gold", "Predicted" = "white", "Knots" = "red")
+point_size <- 1.7
+cross_size <- 3
+
+ggplot() +
+  geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
+  geom_point(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
+  geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = 4, stroke = 1.7, size = cross_size) +
+  theme_light() +
+  labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data', shape = "", color="") +
+  scale_color_manual(values = colors) +
+  guides(color = guide_legend(override.aes=list(shape = c(4, 16, 16), size = 2))) +
+  theme(legend.title = element_text(size=12, color='white'),
+        plot.title = element_text(hjust = 0.5,size=16),
+        legend.text = element_text(size = 10, color = 'white'),
+        legend.key = element_rect(color = NA, fill = NA),
+        legend.background = element_rect(fill = NA),
+        panel.grid.major = element_line(size = 0.3, linetype = 2),
+        panel.grid.minor = element_line(size = 0, linetype = 2),
+        panel.background = element_rect(fill = NA),
+        title = element_text(colour = "white"),
+        plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
+        axis.line = element_line(color = "white"),
+        axis.text = element_text(color = "white", size = 10),
+        axis.title.y = element_text(angle = 0, vjust = 0.5))
 ```
-
 
 ## Update the parameter
 
