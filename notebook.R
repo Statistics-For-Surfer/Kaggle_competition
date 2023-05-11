@@ -47,7 +47,11 @@ power_functions <- function(d, q, knots, x){
 # Function to estimate the weights
 compute_weights <- function(knots , dataset){
   n <- length(knots)
-  knots <- c(0, knots, 1)
+  knots <- c(0, knots)
+  
+  if(knots[(n+1)] != 1){
+    knots <- c(knots, 1)
+  }
   xx <- rep(NA, length(dataset$x))
   
   # compute the variance
@@ -67,6 +71,7 @@ compute_weights <- function(knots , dataset){
 
 # Function used for the cross validation
 cross_val_func <- function(x){
+  set.seed(0707020)
   d <- x[1]
   q <- x[2]
   k <- x[3]
@@ -76,11 +81,16 @@ cross_val_func <- function(x){
   
   # size of the fold
   l_folds <- nrow(train_set) / k 
+  idx <- sample((1:nrow(train_set)),nrow(train_set))
   score <- rep(NA, k)
+  
   for ( i in 1:k){
-    idx <- ((i-1)*l_folds+1): (i*l_folds)
-    cv_test <- train_set[idx,]
-    cv_train <- train_set[-idx,]
+    cv_test <- train_set[idx[((i-1)*l_folds+1): (i*l_folds)],]
+    cv_train <- train_set[-idx[((i-1)*l_folds+1): (i*l_folds)],]
+    
+    #knots <- seq(1/q, p, length.out=q) #knots unif
+    knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
+    
     
     
     knots <- seq(1/q, p, length.out=q)
@@ -124,7 +134,9 @@ inner_crossval <- function(x, train_set){
     cv_test <- train_set[idx,]
     cv_train <- train_set[-idx,]
     
-    knots <- seq(1/q, p, length.out=q)
+    #knots <- seq(1/q, p, length.out=q) #knots unif
+    knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
+    
     
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -155,7 +167,7 @@ nested_crossval <- function(x){
   a <- x[4]
   l <- x[5] 
   p <- x[6]
-  R <- 10
+  R <- 250
   l_folds <<- nrow(train_set) / K
   
   #es <- c()
@@ -172,7 +184,9 @@ nested_crossval <- function(x){
       e_in <- inner_crossval(x, cv_train)
       
       # Outer cross
-      knots <- seq(1/q, p, length.out=q)
+      #knots <- seq(1/q, p, length.out=q) #knots unif
+      knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
+      
      
       M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
       M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -196,7 +210,7 @@ nested_crossval <- function(x){
     }
   }
   
-  mse <- mean(a_list)-mean(b_list)
+  mse <- abs(mean(a_list)-mean(b_list))
   #err <- mean(es)
   return(mse)
 }
@@ -206,11 +220,11 @@ nested_crossval <- function(x){
 
 # Parameters -------------------------------------------------------------
 k <- c(4)
-d_grid <- c(3) 
-q_grid <- seq(3, 30, 1)
-positions <- c(0.5, 0.6, 0.7, 0.8)
-lambdas <- 10^seq(-2.5, -1, .25)
-alphas <- seq(0, 1)
+d_grid <- c(1, 3) 
+q_grid <- seq(3, 40, 2)
+positions <- seq(0.2,0.7,0.1)
+lambdas <- c(0,10^seq(-2.5, -1, .25))
+alphas <- seq(0, 1, 0.1)
 # Set the parameter for the CV
 parameters <- list(d_grid, q_grid, k, alphas, lambdas, positions)
 
@@ -235,11 +249,11 @@ l_best <- best_params[5]
 p_best <- best_params[6]
 
 d <- d_best
-q <- q_best+seq(-2,2,1)
+q <- q_best+seq(-1,1,1)
 k <- k_best
-a <- a_best
-l <- l_best + seq(-0.005,0.005,0.001)
-p <- p_best + seq(-0.05, 0.05, 0.025)
+a <- a_best + seq(-.03, 0, 0.01)
+l <- l_best + seq(-0.003,0.003,0.003)
+p <- p_best
 
 # Set the parameter for the CV
 parameters <- list(d, q, k, a, l, p)
@@ -264,7 +278,7 @@ l_best <- best_params[5]
 p_best <- best_params[6]
 
 # Compute the predictions
-knots <- seq(1/q_best, p_best, length.out=q_best)
+knots <- seq(0, p_best, length.out=q_best+1)[2:(q_best+1)]
 M_train <- power_functions(d = d_best, q = q_best, knots = knots, x = train_set$x)
 M_test <- power_functions( d = d_best, q = q_best, knots = knots, x = test_set_vero$x)
 knots_test <- power_functions( d = d_best, q = q_best, knots = knots, x = knots)
