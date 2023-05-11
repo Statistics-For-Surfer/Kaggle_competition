@@ -63,9 +63,7 @@ compute_weights <- function(knots , dataset){
   
   return(xx)
 }
-if(sum(NULL)){
-  print('cciao')
-}
+
 
 # Function used for the cross validation
 cross_val_func <- function(x){
@@ -204,6 +202,8 @@ nested_crossval <- function(x){
 }
 
 
+
+
 # Parameters -------------------------------------------------------------
 k <- c(4)
 d_grid <- c(3) 
@@ -279,7 +279,7 @@ predictions <- predict(final_model,M_test)
 
 # Simple plot
 plot(train_set$x,train_set$y,cex = .5, pch = 16, col = "Green")
-points(test_set_vero$x,predictions, col = "blue", cex = .5, pch=16)
+points(test_set_vero$x,predictions, col = "orange", cex = .5, pch=16)
 grid()
 points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
