@@ -13,11 +13,11 @@ library(snow)
 test_set_vero <- read.csv("test.csv")
 train_set <- read.csv("train.csv")
 
-quant <- range(quantile(train_set$y, c(0.25, 0.75)))
-Lower <- quant[1] - 1.5*(diff(quant))
-Upper <- quant[2] + 1.5*(diff(quant))
+#quant <- range(quantile(train_set$y, c(0.25, 0.75)))
+#Lower <- quant[1] - 1.5*(diff(quant))
+#Upper <- quant[2] + 1.5*(diff(quant))
 
-train_set <- train_set[(train_set$y > Lower)& (train_set$y < Upper),]
+#train_set <- train_set[(train_set$y > Lower)& (train_set$y < Upper),]
 
 # Functions ---------------------------------------------------------------
 
@@ -219,7 +219,7 @@ nested_crossval <- function(x){
 
 
 # Parameters -------------------------------------------------------------
-k <- c(4)
+k <- c(5)
 d_grid <- c(1, 3) 
 q_grid <- seq(3, 40, 2)
 positions <- seq(0.2,0.7,0.1)
@@ -298,7 +298,6 @@ grid()
 points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
 
-# More beautiful plot ;)
 
 # install.packages('tidyverse')
 # install.packages('manipulate')
@@ -330,10 +329,13 @@ points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
 # Output ------------------------------------------------------------------
 
-best_params
-deviance(final_model)
 
 
-dataset <- data.frame(id = test_set_vero$id, target = predictions[2])
 
+dataset <- data.frame(id = test_set_vero$id, daje = predictions)
+colnames(dataset) <- c("id", "target")
 write.csv(dataset, "predictions.csv", row.names=FALSE)
+pp <- read.csv("predictions.csv")
+plot(test_set_vero$x , pp$target)
+
+
