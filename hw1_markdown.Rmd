@@ -43,45 +43,16 @@ invisible(lapply(pkt, require, character.only = TRUE))
 
 ## Purpose & Statistical tools used
 
-The homework's $1$ purpose is to try to predictic a function $f(\underline{X_i}) = \underline{X_{i}} + \epsilon_i$ [TODO COSa rappresenta sta funzione], by performing a spline regression. 
-
-Fort the Homework's 1 sake we are going to use penalized linear model as linear regression, cross-validation tecnique and in order to implement splines we will use truncated power basis functions.
-
-[TODO] Sistemare
+[TODO]
 
 ## Be linear in transformed feature space
 
-The basic idea of beeing linear in a transformed feauture space is to map our parameters into a higher space (d - dimension ) and the model will be linear in that space.
-
-The problem that slines are trying to solve is that , differently from polynomial models, where the function are defined globally ,they try to capture local structure of a taget function.
-
-
-In order to implent splines we use truncated power functions
-
-$$\mathcal{G}_{d,q} = {g_1(x) \dots g_{d+1}(x),g_{(d+1)+1}(x),\dots,g_{(d+1)+q}(x)}$$
-defined as:
-
-$\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^{d}\}$ and $\{g_{(d+1)+j}(x)= (x−\xi_{j})^d_+\}$ where $(x)_+ =max\{0,x\}$.
-
-
-It is easy to show that the spline $f(\cdot)$ can be rappresented by a linear combination of power functions. 
-
-$$f(x)= \sum_{j= 1}^{d+q+1} β_j ·g_j(x)$$
-We will estimate the $\beta_s$ coefficiente by using a penalized linear model.
-
-
-
-[TODO]  formalizzare, scrivere meglio che fa cagare
+[TODO]
 
 ## Implementation of the truncated power basis
 
-First of all, we have develop our own implementation of the truncated power basis 
-$\mathcal{G}_{d,q}$ with, given a degree $d$ , the number of knots $q$, and their positions, will be able to return a feature matrix $\mathbb{X}$ that will be used in order to get a prediction of the response varible $Y$.
+[TODO] Spiegare perchè usiamo solo le potenze dispari
 
-For the sake on our explanation, we will show below few results of the function, by picking the degree $d \in \{1,3\}$ and the $q \in {3,10\}$ equispaced knots.
-
-
-[TODO]  clean and clever explanations
 ```{r power_function}
 
 # Function used to compute the feature matrix
@@ -160,29 +131,14 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 
 ```
 
-
-### Comments
-
-Untill $j \le d +1$ the power function will be just the value $x^{j-1}$, as soon as $j > d +1$, the power function will be $0$ if the data-point in lower than the knot, otherwise, it will be $(x−\xi_{j})^d$.
-
-The power basis allow us to have a higher dimension feature space fixing without having a high degree of the used polynomial.
-
-Matrice singolare [TODO non mi ricordo bene cosa significa e cosa consegue ma si vedrà]
-
-[TODO] CLean and Clever
-
-
-
 ## ChatGPT - Power function
 
-In this section we ask CHATgbt to implement his own version of truncated power basis.
-Below are reported the conversation we had with it.
 
-**1° Request:**
+**Request:**
 
-"Can you implement a function in R to compute the truncated power basis? The parameters of this function are: $d$, $q$, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$ else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$?"
+" Can you implement a function in r to compute the truncated power basis, with parameters d, q, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$ else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$? "
 
-**1° Response:**
+**Response:**
 
 " Certainly! Here's a function in R that computes the truncated power basis you described:
 
@@ -207,10 +163,11 @@ truncated_power_basis <- function(x, d, q, knots) {
 ```
 
 
-This function takes as input the vector x, the integer d, the integer q, and the vector knots. It returns a matrix with length(x) rows and d+1+q columns, where each column represents a basis function."
+This function takes as input the vector x, the integer d, the integer q, and the vector knots. It returns a matrix with length(x) rows and d+1+q columns, where each column represents a basis function.
 
+To use this function, simply call truncated_power_basis(x, d, q, knots) with your desired inputs. For example, if you want to compute the truncated power basis with d=3, q=2, and knots=c(0.5, 1.5) for the vector x=c(0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4), you would call truncated_power_basis(x, 3, 2, c(0.5, 1.5)). "
 
-We have given a try for it!
+Let's try it!
 
 ```{r GPtest, error=TRUE, class.source = "fold-show"}
 
@@ -218,19 +175,20 @@ d <- 1
 q <- 3
 knots <- seq(0, 1, length.out=q)
 x <- seq(0, 1, length.out=1000)
+
 M <- truncated_power_basis(x, d, q, knots)
 
 ```
 
-Opsie Dupsy! Looks like the ChatBot response doesn't work. So we will try and see how much we have tell it in order to obtain a working function, first thing to do is give it the error we got. 
+Ops! Looks like the ChatBot response doesn't work. So we will try and see how much we have tell it in order to obtain a working function, first thing to do is give it the error we got. 
 
 *For this following part the code will not be directly shown.*
 
-** 2° request: **
+**Second message request: **
 
 "It seems like there is an error with your function, if i try to use it I get this error: "Error in `[<-`(`*tmp*`, , d + 1 + j, value = pmax((x - knots[j])^d, 0)): subscript out of bounds". Could you give me the correct implementation?"
 
-**2° response:**
+**Second response:**
 
 " I apologize for the error in my previous implementation. Here's an updated version of the truncated_power_basis function that should work correctly:
 
@@ -256,15 +214,15 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 ```
 
-$\dots$" 
+..." 
 
-Again it doesn't work, so this time we give the ChatBot a hint, since we have noticed that there isn't enough allocated space for the matrix, this should have $q+d+1$ columns instead of $d+1$.
+Again it doesn't work, so this time we give the ChatBot a hint, since we know that the problem is that there isn't enough allocated space for the matrix, this should have $q+d+1$ columns instead of $d+1$.
 
-**3° message:**
+**Third message:**
 
-"It doesn't solve it, I think the problem is in the dimension of the matrix." 😉
+"It doesn't solve it, I think the problem is in the dimension of the matrix."
 
-**3° response:**
+**Third response:**
 
 "
 I apologize for the continued issue. You are correct that there is an issue with the dimension of the matrix. Here is the corrected implementation of the truncated_power_basis function:
@@ -293,11 +251,11 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 At the end since also this implementation doesn't work we decided to tell the ChatBot how to solve the issue
 
-**4° message:**
+**Forth message:**
 
-"Still not good, shouldn't the matrix have $q+d+1$ columns since we are trying to evaluate $q+d+1$ functions?" 
+"Still not good, shouldn't the matrix have $q+d+1$ columns since we are trying to evaluate $q+d+1$ functions?"
 
-**4° response:**
+**Forth response:**
 
 "
 You are correct. I apologize for the error. The matrix should have $q + d + 1$ columns since we are computing a total of $q + d + 1$ basis functions. Here is the corrected implementation:
@@ -326,10 +284,10 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 But again even if we straight up told the Bot what's the problem and how to solve it the function is not working! At the end the only thing left to do is just tell it the code it should use.
 
-**5° (and final) message:** 
+**Fifth (and final) message:** 
 "You are not allocating the memory for the matrix correctly, basis should be defined as "basis <- matrix(0, nrow = length(x), ncol = d+q+1)""
 
-**5° response:**
+**Fifth response:**
 
 "You are correct again. I apologize for the confusion. Here is the corrected implementation:
 
@@ -353,7 +311,7 @@ truncated_power_basis <- function(x, d, q, knots) {
 }
 ```
 
-$\dots$"
+To use this corrected function, simply call truncated_power_basis(x, d, q, knots) with your desired inputs. For example, to compute the truncated power basis with d=3, q=2, and knots=c(0.5, 1.5) for the vector x=c(0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4), you would call truncated_power_basis(x, 3, 2, c(0.5, 1.5)). This should return a matrix with 7 columns. "
 
 Finally we obtain a function without errors!
 
@@ -362,12 +320,6 @@ truncated_power_basis(seq(0,1,length.out=6), 3, 2, c(0.1, 0.5))
 ```
 
 Sadly though we realize that from the third response on the ChatBot changed a line of code from $basis[,d+j+1] <- pmax((x - knots[j])^d, 0)$ to $basis[,d+j+1] <- pmax((x - knots[j])^{d*(x >= knots[j])}, 0)$ and now the function indeed does gives an output, but it's not the right one.
-
-
-
-### Comments
-
-The chat we had with ChatGPT was an experience. 
 
 # TODO Finisci di scrivere evaluation
 
@@ -524,18 +476,21 @@ best_params
 
 
 ```{r plot after vanilla, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
-colors <- c("Real Data" = "gold", "Predicted" = "white", "Knots" = "red")
-point_size <- 1.7
-cross_size <- 3
+
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "gold1", "Knots" = "#DA1212")
+point_size <- 1.4
+knots_size <- 2.5
+knots_shape <- 18
+
 
 ggplot() +
   geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
   geom_point(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
-  geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = 4, stroke = 1.7, size = cross_size) +
+  geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = knots_shape, stroke = 1.7, size = knots_size) +
   theme_light() +
   labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data', shape = "", color="") +
   scale_color_manual(values = colors) +
-  guides(color = guide_legend(override.aes=list(shape = c(4, 16, 16), size = 2))) +
+  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, 16, 16), size = 2))) +
   theme(legend.title = element_text(size=12, color='white'),
         plot.title = element_text(hjust = 0.5,size=16),
         legend.text = element_text(size = 10, color = 'white'),
@@ -549,6 +504,7 @@ ggplot() +
         axis.line = element_line(color = "white"),
         axis.text = element_text(color = "white", size = 10),
         axis.title.y = element_text(angle = 0, vjust = 0.5))
+
 ```
 
 ## Update the parameter
@@ -735,26 +691,28 @@ best_params
 
 ```{r plot after nested, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
 
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "gold1", "Knots" = "#DA1212")
+point_size <- 2
+knots_size <- 2.5
+knots_shape <- 18
+line_size <- .6
 
-colors <- c("Real Data" = "gold", "Predicted" = "white", "Knots" = "red")
-point_size <- 1.7
-cross_size <- 3
 
 ggplot() +
-  geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
-  geom_point(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
-  geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = 4, stroke = 1.7, size = cross_size) +
-  theme_light() +
+  geom_line(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), linewidth = line_size) +
+  geom_line(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
+  geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = knots_shape, stroke = 1.7, size = knots_size) +
+  theme_bw() +
   labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data', shape = "", color="") +
   scale_color_manual(values = colors) +
-  guides(color = guide_legend(override.aes=list(shape = c(4, 16, 16), size = 2))) +
+  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, NA, NA), size = 2, linetype = c(NA, 1, 1), linewidth=1.8))) +
   theme(legend.title = element_text(size=12, color='white'),
         plot.title = element_text(hjust = 0.5,size=16),
         legend.text = element_text(size = 10, color = 'white'),
         legend.key = element_rect(color = NA, fill = NA),
         legend.background = element_rect(fill = NA),
-        panel.grid.major = element_line(size = 0.3, linetype = 2),
-        panel.grid.minor = element_line(size = 0, linetype = 2),
+        panel.grid.major = element_line(linetype = 0, linewidth = .1),
+        panel.grid.minor = element_line(linetype = 0),
         panel.background = element_rect(fill = NA),
         title = element_text(colour = "white"),
         plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
