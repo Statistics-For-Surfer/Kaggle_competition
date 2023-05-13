@@ -236,8 +236,7 @@ res <- gridSearch(cross_val_func, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
-
-
+save(best_params, "RData\best_params_vanilla.RData")
 # Update Parameters -------------------------------------------------------------
 
 # Using the best parameters
@@ -328,7 +327,6 @@ points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
 
 # Output ------------------------------------------------------------------
-
 
 
 
