@@ -136,11 +136,17 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 
 **Request:**
 
-" Can you implement a function in r to compute the truncated power basis, with parameters d, q, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$ else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$? "
+"
+
+Can you implement a function in r to compute the truncated power basis, with parameters d, q, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$ else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$? 
+
+"
 
 **Response:**
 
-" Certainly! Here's a function in R that computes the truncated power basis you described:
+" 
+
+Certainly! Here's a function in R that computes the truncated power basis you described:
 
 ```{r GPT, class.source = "fold-show"}
 
@@ -165,7 +171,7 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 This function takes as input the vector x, the integer d, the integer q, and the vector knots. It returns a matrix with length(x) rows and d+1+q columns, where each column represents a basis function.
 
-To use this function, simply call truncated_power_basis(x, d, q, knots) with your desired inputs. For example, if you want to compute the truncated power basis with d=3, q=2, and knots=c(0.5, 1.5) for the vector x=c(0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4), you would call truncated_power_basis(x, 3, 2, c(0.5, 1.5)). "
+"
 
 Let's try it!
 
@@ -186,11 +192,17 @@ Ops! Looks like the ChatBot response doesn't work. So we will try and see how mu
 
 **Second message request: **
 
-"It seems like there is an error with your function, if i try to use it I get this error: "Error in `[<-`(`*tmp*`, , d + 1 + j, value = pmax((x - knots[j])^d, 0)): subscript out of bounds". Could you give me the correct implementation?"
+"
+
+It seems like there is an error with your function, if i try to use it I get this error: "Error in `[<-`(`*tmp*`, , d + 1 + j, value = pmax((x - knots[j])^d, 0)): subscript out of bounds". Could you give me the correct implementation?ù
+
+"
 
 **Second response:**
 
-" I apologize for the error in my previous implementation. Here's an updated version of the truncated_power_basis function that should work correctly:
+" 
+
+I apologize for the error in my previous implementation. Here's an updated version of the truncated_power_basis function that should work correctly:
 
 ```{r GPtest2, error=TRUE}
 
@@ -214,17 +226,24 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 ```
 
-..." 
+...
+
+" 
 
 Again it doesn't work, so this time we give the ChatBot a hint, since we know that the problem is that there isn't enough allocated space for the matrix, this should have $q+d+1$ columns instead of $d+1$.
 
 **Third message:**
 
-"It doesn't solve it, I think the problem is in the dimension of the matrix."
+"
+
+It doesn't solve it, I think the problem is in the dimension of the matrix.
+
+"
 
 **Third response:**
 
 "
+
 I apologize for the continued issue. You are correct that there is an issue with the dimension of the matrix. Here is the corrected implementation of the truncated_power_basis function:
 ```{r GPtest3, error=TRUE}
 
@@ -247,7 +266,9 @@ truncated_power_basis <- function(x, d, q, knots) {
 }
 ```
 
-..."
+...
+
+"
 
 At the end since also this implementation doesn't work we decided to tell the ChatBot how to solve the issue
 
@@ -285,11 +306,13 @@ truncated_power_basis <- function(x, d, q, knots) {
 But again even if we straight up told the Bot what's the problem and how to solve it the function is not working! At the end the only thing left to do is just tell it the code it should use.
 
 **Fifth (and final) message:** 
-"You are not allocating the memory for the matrix correctly, basis should be defined as "basis <- matrix(0, nrow = length(x), ncol = d+q+1)""
+"
+You are not allocating the memory for the matrix correctly, basis should be defined as "basis <- matrix(0, nrow = length(x), ncol = d+q+1)""
 
 **Fifth response:**
 
-"You are correct again. I apologize for the confusion. Here is the corrected implementation:
+"
+You are correct again. I apologize for the confusion. Here is the corrected implementation:
 
 ```{r GPtest5, error=TRUE, class.source = "fold-show"}
 truncated_power_basis <- function(x, d, q, knots) {
@@ -325,7 +348,11 @@ Sadly though we realize that from the third response on the ChatBot changed a li
 
 ## Dataset
 
-[TODO]
+
+The Dataset we are going to use to implement the model, is [TODO] mettere la fonte e spiegazione dei dati
+
+The Dataset is composed by $675$ observations of $2$ variable of interest.
+
 
 ```{r dataset}
 
@@ -334,7 +361,50 @@ train_set <- read.csv("train.csv")
 
 ```
 
+
+[TODO] plot of the data points
+
+
+
 ## Vanilla Cross Validation
+
+[TODO] Spiegazione vanilla, k-fold, train,val,test splits
+
+In order to tune the hyperparameter, we are going to perform a $k-fold$ cross validation[ todo non c'ho voglia].
+
+
+
+Since the function is highly variable in the right side, it can be possivle that , picking knots where the functions is very variable, may influence the good predictive performance of our model. In order to try to resolve this problem , we fix the lower bound of the position of the knots at $0$ and we add the hyperparameter $p$ that is reppresenting the upper bound. The knots will be equispaced in interval $(0,p]$.
+
+[TODO] CLean and clever
+
+Once we have performed the power functions, we train a penalized linear model, where we tune the type of regularization from Ridge to Lasso throughout some elestic net.
+
+At the end of the day, we end up with $5$ hyperparameter to tune:
+
+- $\alpha$ for Ridge, Lasso and elastic net
+- $\lambda$ Reguarization parameter
+- $d$ degree of the power functions
+- $q$ the number of knots
+- $p$ positions of the upper bound
+
+
+[TODO] clean and clever
+
+
+
+Since the data shown  that for a higher $x$, the y are way more variable, in the train of our model, we will use weights proportional to the variance given $x$.
+
+Given the knots we estimated the conditional variance by computing the empirical variance of $y$ in the intervals defined by the knots.
+
+We assumed that the $Y$ has been generated by a model with variance dipendent to the $x$. In fact 
+In order to get better performance, we will use weights on
+
+[TODO] CLEAN AND CLEVER
+
+
+The idea is that after cross validation we shrink the space of our parameters that we consider sub-optimal. Then we will perform the nested cross validation in order to select in a more accurate way the hyperparameters.
+
 
 ```{r functions VCV}
 
@@ -450,6 +520,9 @@ names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 ```
 
 
+
+
+
 ```{r training with vanilla parameters, warning = FALSE}
 load("RData/best_params_vanilla.RData")
 # Prediction --------------------------------------------------------------
@@ -507,6 +580,8 @@ ggplot() +
 
 ```
 
+
+### Kaggle-LeaderBoard-Result:  
 ## Update the parameter
 
 
