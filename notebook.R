@@ -52,8 +52,10 @@ compute_weights <- function(knots , dataset){
   if(knots[(n+1)] != 1){
     knots <- c(knots, 1)
   }
-  xx <- rep(NA, length(dataset$x))
   
+  xx <- rep(NA, length(dataset$x))
+  v <- 1
+
   # compute the variance
   for(i in 1:(n+1)){
     if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1])>1){
@@ -134,9 +136,7 @@ inner_crossval <- function(x, train_set){
     cv_test <- train_set[idx,]
     cv_train <- train_set[-idx,]
     
-    #knots <- seq(1/q, p, length.out=q) #knots unif
-    knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
-    
+    knots <- seq(0, p, length.out=q+1)[2:(q+1)]
     
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -170,7 +170,6 @@ nested_crossval <- function(x){
   R <- 250
   l_folds <<- nrow(train_set) / K
   
-  #es <- c()
   a_list <- rep(NA, R*K)
   b_list <- rep(NA, R*K)
   for(r in (1:R)){
@@ -184,9 +183,7 @@ nested_crossval <- function(x){
       e_in <- inner_crossval(x, cv_train)
       
       # Outer cross
-      #knots <- seq(1/q, p, length.out=q) #knots unif
-      knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
-      
+      knots <- seq(0, p, length.out=q+1)[2:(q+1)]
      
       M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
       M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
@@ -206,12 +203,10 @@ nested_crossval <- function(x){
       
       a_list[(r-1)*K+k] <- (mean(e_in)-mean(e_out))^2 
       b_list[(r-1)*K+k] <- (sd(e_out)^2)/l_folds
-      #es <- c(es, e_in)   
     }
   }
   
   mse <- abs(mean(a_list)-mean(b_list))
-  #err <- mean(es)
   return(mse)
 }
 
@@ -221,9 +216,9 @@ nested_crossval <- function(x){
 # Parameters -------------------------------------------------------------
 k <- c(5)
 d_grid <- c(1, 3) 
-q_grid <- seq(3, 40, 2)
-positions <- seq(0.2,0.7,0.1)
-lambdas <- c(0,10^seq(-2.5, -1, .25))
+q_grid <- seq(3, 50, 2)
+positions <- seq(0.2, 0.8, 0.1)
+lambdas <- 10^seq(-0.5, 0, .05)
 alphas <- seq(0, 1, 0.1)
 # Set the parameter for the CV
 parameters <- list(d_grid, q_grid, k, alphas, lambdas, positions)
@@ -248,10 +243,10 @@ l_best <- best_params[5]
 p_best <- best_params[6]
 
 d <- d_best
-q <- q_best+seq(-1,1,1)
+q <- q_best + seq(-1,1,1)
 k <- k_best
-a <- a_best + seq(-.03, 0, 0.01)
-l <- l_best + seq(-0.003,0.003,0.003)
+a <- a_best + seq(-0.03, 0, 0.01)
+l <- l_best + seq(-0.05, 0.05, 0.025)
 p <- p_best
 
 # Set the parameter for the CV
@@ -327,13 +322,24 @@ points(knots, predict(final_model, knots_test), col='red', pch=3, cex=1, lwd=4)
 
 
 # Output ------------------------------------------------------------------
+# 1.00, 40.00, 4.00, 0.77, 1.05, 0.70  Best parameters with data cleaning
+# save(best_params, file = "RData/best_params_DC")
 
+# 3.00, 45.00, 5.00, 1.00, 0.86, 0.60, Best parameters w/o data cleaning
+# save(best_params, file = "RData/best_params_NODC")
 
 
 dataset <- data.frame(id = test_set_vero$id, daje = predictions)
 colnames(dataset) <- c("id", "target")
-write.csv(dataset, "predictions.csv", row.names=FALSE)
-pp <- read.csv("predictions.csv")
+
+# With data cleaning
+# write.csv(dataset, "preds/predictions_DC.csv", row.names=FALSE) 
+# pp <- read.csv("preds/predictions_DC.csv")
+
+# Without data cleaning
+# write.csv(dataset, "preds/predictions_NODC.csv", row.names=FALSE)
+# pp <- read.csv("preds/predictions_NODC.csv")
+
 plot(test_set_vero$x , pp$target)
 
 
