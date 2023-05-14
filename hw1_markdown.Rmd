@@ -726,7 +726,7 @@ its main functions:
 
 - **nested_crossval**, that takes as input the hyperparameters and the data, inside this function we will iteratively select the k-folds randomly, then for each of the folds we call the *inner_crossval* function (to obtain the vector $e^{(in)}$), train and test the model (to compute the vector $e^{(out)}$). After each iteration the function will store $e^{(in)}$ in the vector $es$ and compute the wanted quantities $(mean(e^{(in)})-mean(e^{(out)}))^2$ and $\frac{var(e^{(out)})}{len(fold)}$, to be stored in *a_list* and *b_list* respectly. At the end the function will return an estimator of the RMSE and one for the MSE of the cross-validation MSE.
 
-- **inner_crossval**, takes as input $k-1$ out of the $k$ folds created in the previous function and 
+- **inner_crossval**, takes as input $k-1$ out of the $k$ folds created in the previous function and compute the cross validation on the $k-1$ folds, returning as a output a vector of $k-1$  RMSEs.
 
 
 ```{r nested cross validation, eval=FALSE}
@@ -852,6 +852,16 @@ best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
 ```
 
+
+After performed the nested cross validation we can compute a confidence interval for each of the CV RMSE we got, by using the following computation:
+
+$$
+\big( \widehat{RMSE} - z_{1-\alpha/2} \sqrt{\widehat{MSE}}  \ ,  \widehat{RMSE} + z_{1-\alpha/2} \sqrt{\widehat{MSE}} \ \big)
+$$
+
+For each combination tested, the followiing plot show the estimated RMSE with the $1 - \alpha$ confidece interval associted.
+
+
 ```{r training with nested parameters, warning = FALSE}
 
 # Prediction --------------------------------------------------------------
@@ -908,4 +918,10 @@ ggplot() +
         axis.title.y = element_text(angle = 0, vjust = 0.5))
 ```
 
+### Kaggle-LeaderBoard-Result: $\dots$ in RMSE
+
 # Conclusion & Final Remark
+
+In conclusion, the use of splines for regression can be a powerful tool for modeling nonlinear relationships between variable. Thanks to the use of truncated power basis functions, the splines can effectively capture the complex structure of the relations which can exist between the variables $X$ and $Y$, without using a high degree polynomial which it will lead a more accurate and flexible model.
+
+
