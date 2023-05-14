@@ -93,10 +93,6 @@ cross_val_func <- function(x){
     #knots <- seq(1/q, p, length.out=q) #knots unif
     knots <- seq(0, p, length.out=q+1)[2:(q+1)] # knots first part
     
-    
-    
-    knots <- seq(1/q, p, length.out=q)
-    
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     # M_cv_train <- data.frame(M_cv_train , target = cv_train$y)
     
@@ -208,9 +204,10 @@ nested_crossval <- function(x){
       b_list[(r-1)*K+k] <- (sd(e_out)^2)/l_folds
     }
   }
-  
+ 
   mse <- abs(mean(a_list)-mean(b_list))
   err <- mean(es)
+  
   return(paste(mse, err))
 }
 

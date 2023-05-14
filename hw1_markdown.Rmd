@@ -543,17 +543,20 @@ compute_weights <- function(knots , dataset){
   if(knots[n+1] != 1){
     knots <- c(knots, 1)
   }
-   # Define the matrix
-  xx <- rep(NA, length(dataset$x))
   
-   # For each interval bounded by the knots
+  # Define the matrix
+  xx <- rep(NA, length(dataset$x))
+  # Intialize v in case there are no data-points in the first interval
+  v <- 1
+  
+  # For each interval bounded by the knots
   for(i in 1:(n+1)){
     # Check if there are at least 2 data points inside the interval
     if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1])>1){    
       # Compute the conditional variance 
       v  <- var(dataset$y[(dataset$x >= knots[i]) & (dataset$x <= knots[i+1])]) 
       # Set the weight of the data points equal to the inverse of the variance
-      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1 / v              
+      xx[dataset$x >= knots[i] & dataset$x <= knots[i+1]] <- 1/v              
     } 
     # If there is only one data point
     else if(sum(dataset$x >= knots[i] & dataset$x <= knots[i+1]) == 1){  
@@ -590,7 +593,7 @@ cross_val_func <- function(x){
     cv_train <- train_set[-idx[((i-1)*l_folds+1): (i*l_folds)],]
     
     # Conpute the knots
-    knots <- seq(1/q, p, length.out=q)
+    knots <- seq(0, p, length.out=q+1)[2:(q+1)]
     
     # Compute the power function on the training set
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
@@ -659,7 +662,7 @@ l_best <- best_params[5]
 p_best <- best_params[6]
 
 # Compute the predictions
-knots <- seq(1/q_best, p_best, length.out=q_best)
+knots <- seq(0, p_best, length.out=q_best+1)[2:(q_best+1)]
 M_train <- power_functions(d = d_best, q = q_best, knots = knots, x = train_set$x)
 M_test <- power_functions( d = d_best, q = q_best, knots = knots, x = test_set_vero$x)
 knots_test <- power_functions( d = d_best, q = q_best, knots = knots, x = knots)
@@ -725,6 +728,7 @@ a_best <- best_params[4]
 l_best <- best_params[5]
 p_best <- best_params[6]
 
+#Select the new parameters for the nested cross validation
 d <- d_best
 q <- q_best+seq(-2,2,1)
 k <- k_best
@@ -782,14 +786,14 @@ inner_crossval <- function(x, train_set){
     cv_train <- train_set[-idx,]
     
     # Define the knots
-    knots <- seq(1/q, p, length.out=q)
+    knots <- seq(0, p, length.out=q+1)[2:(q+1)]
     
     
-    #Computhe the power functions
+    # Compute the power functions
     M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
     M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
     
-    # Computhe the weights based on the conditional variance
+    # Compute the weights based on the conditional variance
     hat_weights <- compute_weights(knots = knots , cv_train)
       
     # Train the model
@@ -804,7 +808,7 @@ inner_crossval <- function(x, train_set){
     cv_predictions <- predict(cv_model, M_cv_test)
     
     # Compute the error
-    e_temp <- (cv_test$y-cv_predictions)^2
+    e_temp <- sqrt(cv_test$y-cv_predictions)^2)
     e_in <- c(e_in, e_temp)
   }
   
@@ -825,15 +829,19 @@ nested_crossval <- function(x){
   # Define the length of the folds
   l_folds <<- nrow(train_set) / K
   
-  #
+  # Define the vectors needed
+  es <- c()
   a_list <- rep(NA, R*K)
-  #
   b_list <- rep(NA, R*K)
   
+  # For R times
   for(r in (1:R)){
+    # Select the indexes for the folds randomly
     idx <- sample((1:nrow(train_set)),nrow(train_set))
     
-    for(k in (1:K)){  
+    # For each of the folds
+    for(k in (1:K)){ 
+      # Define train and validation selecting the folds
       cv_test <- train_set[idx[((k-1)*l_folds+1): (k*l_folds)],]
       cv_train <- train_set[-idx[((k-1)*l_folds+1): (k*l_folds)],]
       
@@ -841,31 +849,37 @@ nested_crossval <- function(x){
       e_in <- inner_crossval(x, cv_train)
       
       # Outer cross
-      knots <- seq(1/q, p, length.out=q)
-     
+      knots <- seq(0, p, length.out=q+1)[2:(q+1)]
+      
+      # Map in the feature matrices
       M_cv_train <- power_functions(d = d, q = q, knots = knots, x = cv_train$x)
       M_cv_test <-  power_functions(d = d, q = q, knots = knots, x = cv_test$x)
       
+      # Compute the weights
       hat_weights <- compute_weights(knots = knots , cv_train)
-      
+      # Train the model
       cv_model <- glmnet(M_cv_train, 
                          cv_train$y,
                          family = "gaussian", 
                          alpha=a, 
                          lambda=l,
                          weights = hat_weights)
-      
+      # Compute the predictions
       cv_predictions <- predict(cv_model, M_cv_test)
+      # Compute the error
+      e_out <- sqrt((cv_test$y-cv_predictions)^2)
       
-      e_out <- (cv_test$y-cv_predictions)^2
-      
+      # Store the needed informations
+      es <- c(es, e_in)
       a_list[(r-1)*K+k] <- (mean(e_in)-mean(e_out))^2 
       b_list[(r-1)*K+k] <- (sd(e_out)^2)/l_folds
     }
   }
-  
+   # Compute the estimated error
   mse <- mean(a_list)-mean(b_list)
-  return(mse)
+  err <- mean(es)
+  
+  return(paste(mse,err))
 }
 
 ```
@@ -876,8 +890,17 @@ cl = makeCluster(detectCores())
 clusterExport(cl, c('train_set','compute_weights' ,'inner_crossval', 'power_functions', 'glmnet'))
 res <- gridSearch(nested_crossval, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
-best_params <- res$minlevels
-names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
+
+# save the results err and mse in two vectors
+return_numeric <- function(x){
+  return(as.numeric(strsplit(x, ' ')[[1]]))
+} 
+
+vector <- unlist(lapply(res$values, FUN = return_numeric))
+n <- length(vector)
+mse <- sqrt(vector[seq(n) %% 2 == 1])*1.96
+err <- vector[seq(n) %% 2 == 0]
+
 ```
 
 After performed the nested cross validation we can compute a confidence
@@ -935,7 +958,7 @@ l_best <- best_params[5]
 p_best <- best_params[6]
 
 # Compute the predictions
-knots <- seq(1/q_best, p_best, length.out=q_best)
+knots <- seq(0, p_best, length.out=q_best+1)[2:(q_best+1)]
 M_train <- power_functions(d = d_best, q = q_best, knots = knots, x = train_set$x)
 M_test <- power_functions( d = d_best, q = q_best, knots = knots, x = test_set_vero$x)
 knots_test <- power_functions( d = d_best, q = q_best, knots = knots, x = knots)
