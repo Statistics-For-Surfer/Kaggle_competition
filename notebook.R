@@ -152,7 +152,7 @@ inner_crossval <- function(x, train_set){
     
     cv_predictions <- predict(cv_model, M_cv_test)
     
-    e_temp <- (cv_test$y-cv_predictions)^2
+    e_temp <- sqrt((cv_test$y-cv_predictions)^2)
     e_in <- c(e_in, e_temp)
   }
   
@@ -170,6 +170,7 @@ nested_crossval <- function(x){
   R <- 250
   l_folds <<- nrow(train_set) / K
   
+  es <- c()
   a_list <- rep(NA, R*K)
   b_list <- rep(NA, R*K)
   for(r in (1:R)){
@@ -199,15 +200,17 @@ nested_crossval <- function(x){
       
       cv_predictions <- predict(cv_model, M_cv_test)
       
-      e_out <- (cv_test$y-cv_predictions)^2
+      e_out <- sqrt((cv_test$y-cv_predictions)^2)
       
+      es <- c(es, e_in)
       a_list[(r-1)*K+k] <- (mean(e_in)-mean(e_out))^2 
       b_list[(r-1)*K+k] <- (sd(e_out)^2)/l_folds
     }
   }
   
   mse <- abs(mean(a_list)-mean(b_list))
-  return(mse)
+  err <- mean(es)
+  return(c(mse, err))
 }
 
 
@@ -231,9 +234,9 @@ res <- gridSearch(cross_val_func, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
-save(best_params, "RData\best_params_vanilla.RData")
+save(best_params, "RData\best_params_vanilla_NODC.RData")
 # Update Parameters -------------------------------------------------------------
-
+load("RData\\best_params_vanilla_NODC.RData")
 # Using the best parameters
 d_best <- best_params[1]
 q_best <- best_params[2]
@@ -259,6 +262,14 @@ res <- gridSearch(nested_crossval, levels=parameters, method = 'snow', cl=cl)
 stopCluster(cl)
 best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
+
+
+res$values
+
+
+
+
+
 
 
 # Prediction --------------------------------------------------------------
@@ -342,4 +353,4 @@ colnames(dataset) <- c("id", "target")
 
 plot(test_set_vero$x , pp$target)
 
-
+write.csv(dataset, "preds/predictions.csv", row.names=FALSE)
