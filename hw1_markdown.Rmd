@@ -153,20 +153,15 @@ plot_func <- function(d, q){
     geom_line(linewidth = 1) + 
     ggtitle(paste0('Plot with d = ', d, ' and  q = ', q)) + 
     xlab('x') +
-    ylab('y') +
+    ylab('gi(x)') +
     theme_light() + 
     theme(panel.grid = element_blank(),
           panel.background = element_rect(fill = NA),
-          
           title = element_text(colour = "white"),
-          
           plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
           plot.title = element_text(size=16),
-          
           axis.line = element_line(color = "white"),
           axis.text = element_text(color = "white", size = 10),
-          axis.title.y = element_text(angle = 0, vjust = 0.5),
-          
           legend.title = element_blank(),
           legend.text = element_text(size = 10, color = 'white'),
           legend.key = element_rect(color = NA, fill = NA),
@@ -467,13 +462,32 @@ train_set <- read.csv("train.csv")
 
 ```
 
-```{r plot dataset , warning=FALSE}
+```{r plot dataset, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
+
 # Plot --------------------------------------------------------------------
+colors <- c("Real Data" = "snow")
+point_size <- 1.4
 
-# Simple plot
-plot(train_set$x,train_set$y,cex = .5, pch = 16, col = "Green")
-grid()
-
+ggplot() +
+  geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
+  theme_light() +
+  labs(x = "x", y = "y", color = "     Legend", title = 'Test set', shape = "", color="") +
+  guides(color = guide_legend(override.aes=list(shape = 16, size = 2))) +
+  scale_color_manual(values = colors) +
+  theme(panel.border = element_rect(color = "white"),
+        legend.title = element_text(size=12, color='white'),
+        plot.title = element_text(hjust = 0.5,size=16),
+        legend.text = element_text(size = 10, color = 'white'),
+        legend.key = element_rect(color = NA, fill = NA),
+        legend.background = element_rect(fill = NA),
+        panel.grid.major = element_line(linetype = 2),
+        panel.grid.minor = element_line(linetype = 0),
+        panel.background = element_rect(fill = NA),
+        title = element_text(colour = "white"),
+        plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
+        axis.line = element_line(color = "white"),
+        axis.text = element_text(color = "white", size = 10),
+        axis.title.y = element_text(angle = 0, vjust = 0.5))
 
 ```
 
@@ -627,8 +641,9 @@ stopCluster(cl)
 best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 ```
-[TODO]
-After the vanilla cross validation this are the hyperparameters we obtained:
+
+After the vanilla cross validation this are the hyperparameters
+we obtained:
 
 ```{r training with vanilla parameters, warning = FALSE}
 load("RData//best_params_vanilla_NODC.RData")
@@ -655,31 +670,33 @@ predictions <- predict(final_model,M_test)
 best_params
 ```
 
-After training the model with those hyperparameters and predicting the $Y$ in the test set, we can plot our results.
+After training the model with those hyperparameters and predicting the
+$Y$ in the test set, we can plot our results.
 
 ```{r plot after vanilla, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
 
-colors <- c("Real Data" = "#F1F1E6", "Predicted" = "gold1", "Knots" = "#DA1212")
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#B0413E", "Knots" = "#FFB238")
 point_size <- 1.4
-knots_size <- 2.5
+knots_size <- 1
 knots_shape <- 18
 
 
 ggplot() +
   geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
-  geom_point(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
+  geom_line(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), linewidth = 2) +
   geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = knots_shape, stroke = 1.7, size = knots_size) +
   theme_light() +
-  labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data', shape = "", color="") +
+  labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data after cross validation', shape = "", color="") +
   scale_color_manual(values = colors) +
-  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, 16, 16), size = 2))) +
-  theme(legend.title = element_text(size=12, color='white'),
+  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, NA, 18), size = 2, linetype = c(NA, 1, NA)))) +
+  theme(panel.border = element_rect(color = "white"),
+        legend.title = element_text(size=12, color='white'),
         plot.title = element_text(hjust = 0.5,size=16),
         legend.text = element_text(size = 10, color = 'white'),
         legend.key = element_rect(color = NA, fill = NA),
         legend.background = element_rect(fill = NA),
-        panel.grid.major = element_line(size = 0.3, linetype = 2),
-        panel.grid.minor = element_line(size = 0, linetype = 2),
+        panel.grid.major = element_line(linetype = 2, linewidth=.2),
+        panel.grid.minor = element_line(linetype = 0),
         panel.background = element_rect(fill = NA),
         title = element_text(colour = "white"),
         plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
@@ -693,9 +710,9 @@ ggplot() +
 
 ## Update the parameter
 
-As anticipated before, after computing the k-fold cross validation, we are going 
-to select some new parameter, similar to the ones obtained from the validation, 
-to test via Nested Cross Validation.
+As anticipated before, after computing the k-fold cross validation, we
+are going to select some new parameter, similar to the ones obtained
+from the validation, to test via Nested Cross Validation.
 
 ```{r update parameter, warning=FALSE}
 # Update Parameters -------------------------------------------------------------
@@ -722,13 +739,23 @@ parameters <- list(d, q, k, a, l, p)
 
 ## Nested Cross Validation
 
-To apply the Nested Cross Validation the first thing we have to do is implement
-its main functions:
+To apply the Nested Cross Validation the first thing we have to do is
+implement its main functions:
 
-- **nested_crossval**, that takes as input the hyperparameters and the data, inside this function we will iteratively select the k-folds randomly, then for each of the folds we call the *inner_crossval* function (to obtain the vector $e^{(in)}$), train and test the model (to compute the vector $e^{(out)}$). After each iteration the function will store $e^{(in)}$ in the vector $es$ and compute the wanted quantities $(mean(e^{(in)})-mean(e^{(out)}))^2$ and $\frac{var(e^{(out)})}{len(fold)}$, to be stored in *a_list* and *b_list* respectly. At the end the function will return an estimator of the RMSE and one for the MSE of the cross-validation MSE.
+-   **nested_crossval**, that takes as input the hyperparameters and the
+    data, inside this function we will iteratively select the k-folds
+    randomly, then for each of the folds we call the *inner_crossval*
+    function (to obtain the vector $e^{(in)}$), train and test the model
+    (to compute the vector $e^{(out)}$). After each iteration the
+    function will store $e^{(in)}$ in the vector $es$ and compute the
+    wanted quantities $(mean(e^{(in)})-mean(e^{(out)}))^2$ and
+    $\frac{var(e^{(out)})}{len(fold)}$, to be stored in *a_list* and
+    *b_list* respectly. At the end the function will return an estimator
+    of the RMSE and one for the MSE of the cross-validation MSE.
 
-- **inner_crossval**, takes as input $k-1$ out of the $k$ folds created in the previous function and compute the cross validation on the $k-1$ folds, returning as a output a vector of $k-1$  RMSEs.
-
+-   **inner_crossval**, takes as input $k-1$ out of the $k$ folds
+    created in the previous function and compute the cross validation on
+    the $k-1$ folds, returning as a output a vector of $k-1$ RMSEs.
 
 ```{r nested cross validation, eval=FALSE}
 
@@ -853,15 +880,47 @@ best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
 ```
 
-
-After performed the nested cross validation we can compute a confidence interval for each of the CV RMSE we got, by using the following computation:
+After performed the nested cross validation we can compute a confidence
+interval for each of the CV RMSE we got, by using the following
+computation:
 
 $$
 \big( \widehat{RMSE} - z_{1-\alpha/2} \sqrt{\widehat{MSE}}  \ ,  \widehat{RMSE} + z_{1-\alpha/2} \sqrt{\widehat{MSE}} \ \big)
 $$
 
-For each combination tested, the followiing plot show the estimated RMSE with the $1 - \alpha$ confidece interval associted.
+For each combination tested, the following plot show the estimated RMSE
+with the $1 - \alpha$ confidence interval associated.
 
+```{r plot err with mse CI, fig.showtext = TRUE, fig.height = 5, fig.width = 8, fig.align = "center", message=FALSE, warning=FALSE}
+mse_err <- read.csv("RData/Nested_NODC.csv")
+mse <- mse_err$mse
+err <- mse_err$err
+
+colors <- c("RMSE" = "#F1F1E6", "Confidence Interval" = "#FFB238")
+
+ggplot()+
+  geom_point(aes(x=1:length(mse),y=err, color='RMSE'), shape = 18, size= 1.8)+
+  geom_errorbar(aes(x =1:length(mse), ymin=err-mse, ymax=mse+err, width=0.2, color='Confidence Interval'))+
+  theme_bw() +
+  scale_y_continuous(limits = c(1100, 2100)) +
+  labs(x = "Combination of hyperparameters", y = "CI of RMSE", color = "    Legend", title = 'Confidence Interval of RMSE', shape = "", color="") +
+  guides(color = guide_legend(override.aes=list(shape = c(NA, 18), size = 2, linetype = c(1, NA), linewidth=1.4))) +
+  scale_color_manual(values = colors) +
+  theme(panel.border = element_rect(color = "white"),
+      legend.title = element_text(size=12, color='white'),
+      plot.title = element_text(hjust = 0.5,size=16),
+      legend.text = element_text(size = 10, color = 'white'),
+      legend.key = element_rect(color = NA, fill = NA),
+      legend.background = element_rect(fill = NA),
+      panel.grid.major = element_line(linetype = 0, linewidth=.2),
+      panel.grid.minor = element_line(linetype = 0),
+      panel.background = element_rect(fill = NA),
+      title = element_text(colour = "white"),
+      plot.background = element_rect(fill = NA, colour = "#2B3E50"), 
+      axis.line = element_line(color = "white"),
+      axis.text = element_text(color = "white", size = 10))
+
+```
 
 ```{r training with nested parameters, warning = FALSE}
 load("RData//best_params_NODC.RData")
@@ -889,27 +948,28 @@ best_params
 
 ```{r plot after nested, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
 
-colors <- c("Real Data" = "#F1F1E6", "Predicted" = "gold1", "Knots" = "#DA1212")
-point_size <- 2
-knots_size <- 2.5
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#B0413E", "Knots" = "#FFB238")
+point_size <- 1.4
+knots_size <- 1
 knots_shape <- 18
 line_size <- .6
 
 
 ggplot() +
-  geom_line(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), linewidth = line_size) +
-  geom_line(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = point_size) +
+  geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size) +
+  geom_line(aes(x = test_set_vero$x, y = predictions, color = 'Predicted'), size = 2) +
   geom_point(aes(x = knots, y = predict(final_model, knots_test), color = 'Knots'), shape = knots_shape, stroke = 1.7, size = knots_size) +
   theme_bw() +
-  labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP data', shape = "", color="") +
+  labs(x = "x", y = "y", color = "     Legend", title = 'Prediction on WMAP after nested cross validation', shape = "", color="") +
   scale_color_manual(values = colors) +
-  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, NA, NA), size = 2, linetype = c(NA, 1, 1), linewidth=1.8))) +
-  theme(legend.title = element_text(size=12, color='white'),
+  guides(color = guide_legend(override.aes=list(shape = c(knots_shape, NA, 18), size = 2, linetype = c(NA, 1, NA), linewidth=1.8))) +
+  theme(panel.border = element_rect(color = "white"),
+        legend.title = element_text(size=12, color='white'),
         plot.title = element_text(hjust = 0.5,size=16),
         legend.text = element_text(size = 10, color = 'white'),
         legend.key = element_rect(color = NA, fill = NA),
         legend.background = element_rect(fill = NA),
-        panel.grid.major = element_line(linetype = 0, linewidth = .1),
+        panel.grid.major = element_line(linetype = 2, linewidth=.2),
         panel.grid.minor = element_line(linetype = 0),
         panel.background = element_rect(fill = NA),
         title = element_text(colour = "white"),
@@ -923,6 +983,9 @@ ggplot() +
 
 # Conclusion & Final Remark
 
-In conclusion, the use of splines for regression can be a powerful tool for modeling nonlinear relationships between variable. Thanks to the use of truncated power basis functions, the splines can effectively capture the complex structure of the relations which can exist between the variables $X$ and $Y$, without using a high degree polynomial which it will lead a more accurate and flexible model.
-
-
+In conclusion, the use of splines for regression can be a powerful tool
+for modeling nonlinear relationships between variable. Thanks to the use
+of truncated power basis functions, the splines can effectively capture
+the complex structure of the relations which can exist between the
+variables $X$ and $Y$, without using a high degree polynomial which it
+will lead a more accurate and flexible model.
