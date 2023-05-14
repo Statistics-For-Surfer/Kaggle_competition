@@ -43,15 +43,51 @@ invisible(lapply(pkt, require, character.only = TRUE))
 
 ## Purpose & Statistical tools used
 
-[TODO]
+The homework's $1$ goal is to try to estimate an unknown  function $f(\underline{X_i})$, under the assumptions that $f$ lies in some fixed class of functions, in order to predict the response variable $Y$ from indipendent data $(X_1,Y_i) \dots ,(X_n,Y_n)$, assumining that the data satisfy the following:
+
+$$Y_i | X_1 , \dots , X_n \sim p(y | f(X_i))$$
+For the Homework's $1$ sake we are going to use penalized linear regression model, obtaining the following:
+$$ Y_i = f(x_i) + \epsilon_i \ for \ i = 1\dots n $$
+where the $\epsilon_i$ are $i.i.d$ data from some normal distribution $N(0,\sigma^2)$.
+
+In order to get the optimal hyperparameter and MSE estimation  we will implement CV and nested CV tecnique.
+
 
 ## Be linear in transformed feature space
 
-[TODO]
+The basic idea of being linear in a transformed feature space is to map our parameters into a higher dimensional space with d-dimensions. The model will then be linear in that space. Mathematically, this can be expressed as follows:
+
+Let $\phi(x)$ be a feature mapping function that maps the input data $x$ into a transformed d-dimensional space. Let $w$ be a weight vector in the transformed space. Thus, the prediction function is given by $f(x) = w^T\phi(x)$. By mapping the parameters into higher dimensional space, we can capture more complex relationships between the characteristics and the target variable.
+
+
+The polynomial models in a d-dimensional feature space assume that there is a dixed functional dorm for the relationship between the imput features and the response variable. And since this relationship is defined globally, these model may not capture the entire complexity of the data.
+
+Spline regression models, instead provide  more flexible and adaptive modeling in order to catch the local structures of the target function $Y$.
+
+In order to implement splines, we use truncated power functions $\mathcal{G}_{d,q}$, defined as:
+
+ $$\mathcal{G}_{d,q} = {g_1(x) \dots g_{d+1}(x),g_{(d+1)+1}(x),\dots,g_{(d+1)+q}(x)}$$
+ defined as:
+
+ $\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^{d}\}$ and $\{g_{(d+1)+j}(x)= (x−\xi_{j})^d_+\}$ where $(x)_+ =max\{0,x\}$.
+
+
+It can be easily shown that the spline function $f(x)$ can be represented by a linear combination of the power functions in $\mathcal{G}_{d,q}$: 
+
+ $$f(x)= \sum_{j= 1}^{d+q+1} β_j ·g_j(x)$$
+
+
+where $\beta_j$ are the coefficients to be estimated, and $g_j(x)$ denotes the $j$-th power function in $\mathcal{G}_{d,q}$.
+
+
+
+
 
 ## Implementation of the truncated power basis
 
-[TODO] Spiegare perchè usiamo solo le potenze dispari
+We have developed our own function of the truncated power basis $\mathcal{G}_{d,q}$. This function takes as input the degree $d$ of the truncated power functions, the number of knots $q$, and their positions, and returns a feature matrix $\mathbb{X}$. The feature matrix $\mathbb{X}$ will be used to obtain a prediction of the response variable $Y$.
+
+In order to illustrate our implementation, in the following plots, results are shown  considering $d\ \in \{1 , 3\}$, and  $d\ \in \{3 , 10\}$.
 
 ```{r power_function}
 
@@ -131,10 +167,27 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 
 ```
 
+## Comments
+
+For $j \le d +1$, the truncated power function is defined as $g_j(x) = x^{j-1}$. For $j > d +1$, the truncated power function is defined as $g_j(x) = (x-\xi_j)^d_+$, where $(x)_+ = \max{0,x}$, and $\xi_j$ is the $j-d-1$-th knot.
+
+For $j > d +1$, the truncated power function is equal to zero for data points below the knot $\xi_j$, and $(x-\xi_j)^d$ for data points above the knot. This creates a piecewise continuous function that is linear between the knots.
+
+Using the truncated power basis allows us to work with a higher dimensional feature space without using a high degree polynomial. The additional dimensions in the feature space come from the truncated power functions that capture the local structure of the target function around each knot. This can lead to more accurate modeling of complex relationships between the input features and the target variable.
+
+An issue that can arise in spline regression is the presence of a non-singular matrix, which can lead to numerical instability in order to  obtain the parameter estimates.
+
+This problem typically arises when the knots are not well-spaced or when the degree of the spline is too high relative to the number of observations. In these cases, the matrix of the spline basis functions can become rank-deficient, which means that it has fewer linearly independent rows or columns than its dimensions.
+
+
+
 ## ChatGPT - Power function
 
 
-**Request:**
+In this section we ask CHATgbt to implement his own version of truncated power basis.
+ Below are reported the conversation we had with it.
+
+** 1° Request:**
 
 "
 
@@ -142,7 +195,7 @@ Can you implement a function in r to compute the truncated power basis, with par
 
 "
 
-**Response:**
+**1 ° Response:**
 
 " 
 
@@ -173,7 +226,7 @@ This function takes as input the vector x, the integer d, the integer q, and the
 
 "
 
-Let's try it!
+Let's give a try to the chatbot implementation!
 
 ```{r GPtest, error=TRUE, class.source = "fold-show"}
 
@@ -186,11 +239,11 @@ M <- truncated_power_basis(x, d, q, knots)
 
 ```
 
-Ops! Looks like the ChatBot response doesn't work. So we will try and see how much we have tell it in order to obtain a working function, first thing to do is give it the error we got. 
+Oopsie Doopsie! Looks like the ChatBot response doesn't work. So we will try and see how much we have tell it in order to obtain a working function, first thing to do is give it the error we got. 
 
 *For this following part the code will not be directly shown.*
 
-**Second message request: **
+**2° message request: **
 
 "
 
@@ -198,7 +251,7 @@ It seems like there is an error with your function, if i try to use it I get thi
 
 "
 
-**Second response:**
+**2° response:**
 
 " 
 
@@ -232,7 +285,7 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 Again it doesn't work, so this time we give the ChatBot a hint, since we know that the problem is that there isn't enough allocated space for the matrix, this should have $q+d+1$ columns instead of $d+1$.
 
-**Third message:**
+**3° message:**
 
 "
 
@@ -240,7 +293,7 @@ It doesn't solve it, I think the problem is in the dimension of the matrix.
 
 "
 
-**Third response:**
+**3° response:**
 
 "
 
@@ -272,11 +325,11 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 At the end since also this implementation doesn't work we decided to tell the ChatBot how to solve the issue
 
-**Forth message:**
+**4° message:**
 
-"Still not good, shouldn't the matrix have $q+d+1$ columns since we are trying to evaluate $q+d+1$ functions?"
+"Still not good, shouldn't the matrix have $q+d+1$ columns since we are trying to evaluate $q+d+1$ functions?"😅
 
-**Forth response:**
+**4° response:**
 
 "
 You are correct. I apologize for the error. The matrix should have $q + d + 1$ columns since we are computing a total of $q + d + 1$ basis functions. Here is the corrected implementation:
@@ -305,11 +358,11 @@ truncated_power_basis <- function(x, d, q, knots) {
 
 But again even if we straight up told the Bot what's the problem and how to solve it the function is not working! At the end the only thing left to do is just tell it the code it should use.
 
-**Fifth (and final) message:** 
+**5° (and final) message:** 
 "
 You are not allocating the memory for the matrix correctly, basis should be defined as "basis <- matrix(0, nrow = length(x), ncol = d+q+1)""
 
-**Fifth response:**
+**5° response:**
 
 "
 You are correct again. I apologize for the confusion. Here is the corrected implementation:
@@ -344,7 +397,12 @@ truncated_power_basis(seq(0,1,length.out=6), 3, 2, c(0.1, 0.5))
 
 Sadly though we realize that from the third response on the ChatBot changed a line of code from $basis[,d+j+1] <- pmax((x - knots[j])^d, 0)$ to $basis[,d+j+1] <- pmax((x - knots[j])^{d*(x >= knots[j])}, 0)$ and now the function indeed does gives an output, but it's not the right one.
 
-# TODO Finisci di scrivere evaluation
+## Comments:
+
+After the chat we had wit ChatGPT, our thoughts are that the chatbot can be very useful for providing a starting point which to start. We think it can be risky
+for non-experts in the field since the may not be able to identify errors or misunderstandings in the information that the chat provides, it can lead to errors in the fianl results.
+
+We have to remark that that chatbots have limitations in fields that require specialized knowledge or experience, such as statistics or data analysis.
 
 ## Dataset
 
