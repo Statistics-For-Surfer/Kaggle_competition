@@ -627,11 +627,12 @@ stopCluster(cl)
 best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 ```
-
+[TODO]
 After the vanilla cross validation this are the hyperparameters we obtained:
 
 ```{r training with vanilla parameters, warning = FALSE}
 load("RData//best_params_vanilla_NODC.RData")
+
 # Prediction --------------------------------------------------------------
 
 # Using the best parameters
@@ -863,7 +864,7 @@ For each combination tested, the followiing plot show the estimated RMSE with th
 
 
 ```{r training with nested parameters, warning = FALSE}
-
+load("RData//best_params_NODC.RData")
 # Prediction --------------------------------------------------------------
 
 # Using the best parameters
@@ -918,7 +919,7 @@ ggplot() +
         axis.title.y = element_text(angle = 0, vjust = 0.5))
 ```
 
-### Kaggle-LeaderBoard-Result: $\dots$ in RMSE
+### Kaggle-LeaderBoard-Result: 3325,03931 in RMSE
 
 # Conclusion & Final Remark
 
