@@ -168,6 +168,7 @@ nested_crossval <- function(x){
   l <- x[5] 
   p <- x[6]
   R <- 250
+  #R <- 5
   l_folds <<- nrow(train_set) / K
   
   es <- c()
@@ -210,9 +211,8 @@ nested_crossval <- function(x){
   
   mse <- abs(mean(a_list)-mean(b_list))
   err <- mean(es)
-  return(c(mse, err))
+  return(paste(mse, err))
 }
-
 
 
 
@@ -250,7 +250,7 @@ q <- q_best + seq(-1,1,1)
 k <- k_best
 a <- a_best + seq(-0.03, 0, 0.01)
 l <- l_best + seq(-0.05, 0.05, 0.025)
-p <- p_best
+p <- p_best 
 
 # Set the parameter for the CV
 parameters <- list(d, q, k, a, l, p)
@@ -264,12 +264,20 @@ best_params <- res$minlevels
 names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda','position')
 
 
-res$values
+# plot errors 
+return_numeric <- function(x){
+  return(as.numeric(strsplit(x, ' ')[[1]]))
+} 
 
+write.csv(data.frame(mse,err), "RData/Nested_NODC.csv", row.names=FALSE)
+vector <- unlist(lapply(res$values, FUN = return_numeric))
+n <- length(vector)
 
+mse <- sqrt(vector[seq(n) %% 2 == 1])*1.96
+err <- vector[seq(n) %% 2 == 0]
 
-
-
+ggplot()+geom_line(aes(x=1:length(mse),y=err))+
+  geom_errorbar(aes(x =1:length(mse), ymin=err-mse,ymax=mse+err,width=0.2, color='red'))
 
 
 # Prediction --------------------------------------------------------------
