@@ -43,7 +43,7 @@ invisible(lapply(pkt, require, character.only = TRUE))
 
 ## Purpose & Statistical tools used
 
-The homework's $1$ goal is to try to estimate an unknown  function $f(\underline{X_i})$, under the assumptions that $f$ lies in some fixed class of functions, in order to predict the response variable $Y$ from indipendent data $(X_1,Y_i) \dots ,(X_n,Y_n)$, assumining that the data satisfy the following:
+The homework's $1$ goal is to try to estimate an unknown  function $f(X_i)$, under the assumptions that $f$ lies in some fixed class of functions, in order to predict the response variable $Y$ from indipendent data $(X_1,Y_i) \dots ,(X_n,Y_n)$, assumining that the data satisfy the following:
 
 $$Y_i | X_1 , \dots , X_n \sim p(y | f(X_i))$$
 For the Homework's $1$ sake we are going to use penalized linear regression model, obtaining the following:
@@ -55,14 +55,14 @@ In order to get the optimal hyperparameter and MSE estimation  we will implement
 
 ## Be linear in transformed feature space
 
-The basic idea of being linear in a transformed feature space is to map our parameters into a higher dimensional space with d-dimensions. The model will then be linear in that space. Mathematically, this can be expressed as follows:
+The basic idea of being linear in a transformed feature space is to map our parameters into a higher dimensional space with d-dimensions. The model will then be linear in that space.
 
-Let $\phi(x)$ be a feature mapping function that maps the input data $x$ into a transformed d-dimensional space. Let $w$ be a weight vector in the transformed space. Thus, the prediction function is given by $f(x) = w^T\phi(x)$. By mapping the parameters into higher dimensional space, we can capture more complex relationships between the characteristics and the target variable.
+Let $\phi(x)$ be a feature mapping function that maps the input data $x$ into a transformed d-dimensional space. Let $w$ be a weight vector in the transformed space. Thus, the prediction function is given by $f(x) = w^T\phi(x)$. By mapping the parameters into higher dimensional space, we can capture more complex structures between the features and the target variable.
 
 
-The polynomial models in a d-dimensional feature space assume that there is a dixed functional dorm for the relationship between the imput features and the response variable. And since this relationship is defined globally, these model may not capture the entire complexity of the data.
+The polynomial models in a d-dimensional feature space assume that there is a fixed functional form for the relationship between features and the response variable. And since this relationship is defined globally, these model may not capture the entire complexity of the data.
 
-Spline regression models, instead provide  more flexible and adaptive modeling in order to catch the local structures of the target function $Y$.
+Spline regression models, instead provide  more flexible and adaptive modeling in order to catch up the local structures of the target function $Y$.
 
 In order to implement splines, we use truncated power functions $\mathcal{G}_{d,q}$, defined as:
 
@@ -81,13 +81,11 @@ where $\beta_j$ are the coefficients to be estimated, and $g_j(x)$ denotes the $
 
 
 
-
-
 ## Implementation of the truncated power basis
 
 We have developed our own function of the truncated power basis $\mathcal{G}_{d,q}$. This function takes as input the degree $d$ of the truncated power functions, the number of knots $q$, and their positions, and returns a feature matrix $\mathbb{X}$. The feature matrix $\mathbb{X}$ will be used to obtain a prediction of the response variable $Y$.
 
-In order to illustrate our implementation, in the following plots, results are shown  considering $d\ \in \{1 , 3\}$, and  $d\ \in \{3 , 10\}$.
+In order to illustrate our implementation, in the following plots, results are shown considering $d\ \in \{1 , 3\}$, and  $d\ \in \{3 , 10\}$.
 
 ```{r power_function}
 
@@ -171,9 +169,9 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 
 For $j \le d +1$, the truncated power function is defined as $g_j(x) = x^{j-1}$. For $j > d +1$, the truncated power function is defined as $g_j(x) = (x-\xi_j)^d_+$, where $(x)_+ = \max{0,x}$, and $\xi_j$ is the $j-d-1$-th knot.
 
-For $j > d +1$, the truncated power function is equal to zero for data points below the knot $\xi_j$, and $(x-\xi_j)^d$ for data points above the knot. This creates a piecewise continuous function that is linear between the knots.
+For $j > d +1$, the truncated power function is equal to zero for data points below the knot $\xi_j$, and $(x-\xi_j)^d$ for data points above the knot. 
 
-Using the truncated power basis allows us to work with a higher dimensional feature space without using a high degree polynomial. The additional dimensions in the feature space come from the truncated power functions that capture the local structure of the target function around each knot. This can lead to more accurate modeling of complex relationships between the input features and the target variable.
+The use of truncated power basis allows us to work with a higher dimensional feature space without using a high degree polynomial. The additional dimensions in the feature space come from the truncated power functions that capture the local structure of the target function around each knot. This can lead to more accurate modeling of complex relationships between the input features and the target variable.
 
 An issue that can arise in spline regression is the presence of a non-singular matrix, which can lead to numerical instability in order to  obtain the parameter estimates.
 
@@ -184,7 +182,7 @@ This problem typically arises when the knots are not well-spaced or when the deg
 ## ChatGPT - Power function
 
 
-In this section we ask CHATgbt to implement his own version of truncated power basis.
+In this section we ask CHAT-GPT to implement his own version of truncated power basis.
  Below are reported the conversation we had with it.
 
 ** 1° Request:**
@@ -407,7 +405,7 @@ We have to remark that that chatbots have limitations in fields that require spe
 ## Dataset
 
 
-The Dataset we are going to use to implement the model, is [TODO] mettere la fonte e spiegazione dei dati
+The Dataset we are going to use to implement the model is about  **Wilkinson Microwave Anisotropy Probe**, also known as **WMAP**. An explorer mission that measured the difference of temperature accros the space.
 
 The Dataset is composed by $675$ observations of $2$ variable of interest.
 
@@ -420,21 +418,25 @@ train_set <- read.csv("train.csv")
 ```
 
 
-[TODO] plot of the data points
+```{r plot dataset , warning=FALSE}
+# Plot --------------------------------------------------------------------
+
+# Simple plot
+plot(train_set$x,train_set$y,cex = .5, pch = 16, col = "Green")
+grid()
+
+
+```
 
 
 
 ## Vanilla Cross Validation
 
-[TODO] Spiegazione vanilla, k-fold, train,val,test splits
+In order to estimate the coefficients $\beta_j$ in our penalized linear model, we are going to perform a $k-fold$ cross validation.
 
-In order to tune the hyperparameter, we are going to perform a $k-fold$ cross validation[ todo non c'ho voglia].
-
-
-
-Since the function is highly variable in the right side, it can be possivle that , picking knots where the functions is very variable, may influence the good predictive performance of our model. In order to try to resolve this problem , we fix the lower bound of the position of the knots at $0$ and we add the hyperparameter $p$ that is reppresenting the upper bound. The knots will be equispaced in interval $(0,p]$.
-
-[TODO] CLean and clever
+Since the variance of the response variable is not constant across the range of predictor variables
+it can be possible that , picking knots where the functions is very variable, may influence the good predictive performance of our model.
+In order to try to resolve this problem, we fix the lower bound of the position of the knots at $0$ and we add the hyperparameter $p$ that is reppresenting the upper bound. The knots will be equispaced in interval $(0,p]$.
 
 Once we have performed the power functions, we train a penalized linear model, where we tune the type of regularization from Ridge to Lasso throughout some elestic net.
 
@@ -447,18 +449,14 @@ At the end of the day, we end up with $5$ hyperparameter to tune:
 - $p$ positions of the upper bound
 
 
-[TODO] clean and clever
 
 
 
-Since the data shown  that for a higher $x$, the y are way more variable, in the train of our model, we will use weights proportional to the variance given $x$.
+Since the data shown  that for a higher $x$, the y are way more variable, in the train of our model, we will use into the model weights proportional to the variance given $x$.
+
+We will down-weight observations with high variance and up-weight observations with low variance, which can decrease the error of our predictions. 
 
 Given the knots we estimated the conditional variance by computing the empirical variance of $y$ in the intervals defined by the knots.
-
-We assumed that the $Y$ has been generated by a model with variance dipendent to the $x$. In fact 
-In order to get better performance, we will use weights on
-
-[TODO] CLEAN AND CLEVER
 
 
 The idea is that after cross validation we shrink the space of our parameters that we consider sub-optimal. Then we will perform the nested cross validation in order to select in a more accurate way the hyperparameters.
