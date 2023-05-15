@@ -902,6 +902,7 @@ vector <- unlist(lapply(res$values, FUN = return_numeric))
 n <- length(vector)
 mse <- sqrt(vector[seq(n) %% 2 == 1])*1.96
 err <- vector[seq(n) %% 2 == 0]
+best_params <- res$levels[[which.min(mse)]]
 
 ```
 
