@@ -19,5 +19,12 @@ The goal of the project is to estimate an unknown function $f(X)$
 
 ### *Structure*:
 This repository contains:
-
+*  `HW_part1.pdf`: The homework explanatiom
+*  `HW_part2.pdf`: The homework explanation
+*  `hw1_markdown.Rmd`: The Rmd file with comments and results
+*  `hw1_markdown.html`: The html file with comments and results reported
+*  `train.csv`: The train set we used for the project
+*  `test.csv`: The test set without $y$
+*  `preds`: folder contains the predictions of various model
+*  `RData`: folder contains the best parameter selected
 
