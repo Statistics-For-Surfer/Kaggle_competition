@@ -43,20 +43,23 @@ invisible(lapply(pkt, require, character.only = TRUE))
 
 ## Purpose & Statistical tools used
 
-The homework's $1$ goal is to try to estimate an unknown function
-$f(X_i)$, under the assumptions that $f$ lies in some fixed class of
-functions, in order to predict the response variable $Y$ from
-independent data $(X_1,Y_i) \dots ,(X_n,Y_n)$, assuming that the data
-satisfy the following:
+The homework's goal is to try to estimate an unknown function
+$f(X)$ in order to predict the response variable $Y$ from
+independent data $(X_1,Y_1) \dots ,(X_n,Y_n)$, to achieve this goal we will assume:
 
-$$Y_i | X_1 , \dots , X_n \sim p(y | f(X_i))$$ For the Homework's $1$
-sake we are going to use a penalized linear regression model, obtaining
-the following: $$ Y_i = f(x_i) + \epsilon_i \ for \ i = 1\dots n $$
+- $Y_i | X_1 , \dots , X_n \sim p(y | f(X_i))$
+
+- $f$ lies in some fixed class of
+functions.
+
+
+For the Homework's sake we are going to use a penalized linear regression model and truncated power basis function, obtaining
+the following: $$ Y_i = f(\underline{x_i}) + \epsilon_i \ for \ i = 1\dots n $$
 where the $\epsilon_i$ are $i.i.d$ data from some normal distribution
 $N(0,\sigma^2)$.
 
-In order to get the optimal hyperparameter and MSE estimation we will
-implement CV and nested CV technique.
+In order to get the optimal hyperparameters and MSE estimation we will
+implement CV and nested CV techniques.
 
 ## Be linear in transformed feature space
 
@@ -74,29 +77,29 @@ the target variable.
 The polynomial models in a d-dimensional feature space assume that there
 is a fixed functional form for the relationship between features and the
 response variable. And since this relationship is defined globally,
-these model may not capture the entire complexity of the data.
+these models may not capture the entire complexity of the data.
 
-Spline regression models, instead provide more flexible and adaptive
+Spline regression models, instead, provide more flexible and adaptive
 modeling in order to catch up the local structures of the target
-function $Y$.
+variable $Y$.
 
 In order to implement splines, we use truncated power functions
 $\mathcal{G}_{d,q}$, defined as:
 
-$$\mathcal{G}_{d,q} = {g_1(x) \dots g_{d+1}(x),g_{(d+1)+1}(x),\dots,g_{(d+1)+q}(x)}$$
-defined as:
+$$\mathcal{G}_{d,q} = \{g_1(x) \dots g_{d+1}(x),g_{(d+1)+1}(x),\dots,g_{(d+1)+q}(x) \}$$
+where:
 
 $\{g_1(x)=1,g_2(x)=x,...,g_{d+1}(x)=x^{d}\}$ and
 $\{g_{(d+1)+j}(x)= (x−\xi_{j})^d_+\}$ where $(x)_+ =max\{0,x\}$.
 
 It can be easily shown that the spline function $f(x)$ can be
-represented by a linear combination of the power functions in
+represented by a linear combination of the power functions
 $\mathcal{G}_{d,q}$:
 
 $$f(x)= \sum_{j= 1}^{d+q+1} β_j ·g_j(x)$$
 
 where $\beta_j$ are the coefficients to be estimated, and $g_j(x)$
-denotes the $j$-th power function in $\mathcal{G}_{d,q}$.
+denotes the $j$-th power function of  $\mathcal{G}_{d,q}$.
 
 ## Implementation of the truncated power basis
 
@@ -109,7 +112,7 @@ variable $Y$.
 
 In order to illustrate our implementation, in the following plots,
 results are shown considering $d\ \in \{1 , 3\}$ and
-$d\ \in \{3 , 10\}$.
+$q\ \in \{3 , 10\}$.
 
 ```{r power_function}
 
@@ -137,7 +140,7 @@ power_functions <- function(d, q, knots, x){
 
 ```
 
-```{r plot truncated power function, fig.showtext = TRUE, fig.height = 7, fig.width = 12, fig.align = "center", message=FALSE, warning=FALSE}
+```{r plot truncated power function, fig.showtext = TRUE, fig.height = 7, fig.width = 12, fig.align = "center", message=FALSE, warning=FALSE , echo = FALSE}
 
 plot_func <- function(d, q){
   knots <- seq(0, 1, length.out = q+2)[2 : (q+1)]
@@ -186,8 +189,8 @@ grid.arrange(p1, p2, p3, p4, ncol=2)
 
 For $j \le d +1$, the truncated power function is defined as
 $g_j(x) = x^{j-1}$. For $j > d +1$, the truncated power function is
-defined as $g_j(x) = (x-\xi_j)^d_+$, where $(x)_+ = \max{0,x}$, and
-$\xi_j$ is the $j-d-1$-th knot.
+defined as $g_j(x) = (x-\xi_j)^d_+$, where $(x)_+ = \max\{0,x\}$, and
+$\xi_j$ is the $(j-d-1)$-th knot.
 
 For $j > d +1$, the truncated power function is equal to zero for data
 points below the knot $\xi_j$, and $(x-\xi_j)^d$ for data points above
@@ -218,8 +221,8 @@ it.
 
 **1° Request:**
 
-" Can you implement a function in r to compute the truncated power
-basis, with parameters d, q, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$
+" Can you implement a function in R to compute the truncated power
+basis, with parameters $d$, $q$, knots. Where $g_i=x^{i-1}$ if $i\le(d+1)$
 else $g_{d+1+j} = \max((x-knots[j])^d, 0)$ for $j \in [1,q]$? "
 
 **1 ° Response:**
@@ -247,8 +250,8 @@ truncated_power_basis <- function(x, d, q, knots) {
 }
 ```
 
-This function takes as input the vector x, the integer d, the integer q,
-and the vector knots. It returns a matrix with length(x) rows and d+1+q
+This function takes as input the vector $x$, the integer $d$, the integer $q$,
+and the vector knots. It returns a matrix with length(x) rows and $d+1+q$
 columns, where each column represents a basis function."
 
 Let's give a try to the ChatBot implementation!
@@ -265,8 +268,8 @@ M <- truncated_power_basis(x, d, q, knots)
 ```
 
 Oopsie Doopsie! Looks like the ChatBot response doesn't work. So we will
-try and see how much we have tell it in order to obtain a working
-function, the first thing we will do is tell it the error we got.
+try and see how much we have to tell it in order to obtain a working
+function, the first thing we will do is show it the error we got.
 
 *For this following part the code will not be directly shown.*
 
@@ -438,12 +441,11 @@ After the chat we had with ChatGPT, our thoughts are that the chatbot
 can be very useful for providing a starting point. We believe, however,
 that can be risky for non-experts in the field to use the chatbot, since
 they may not be able to identify errors or misunderstandings in the
-information that the chat provides, it can lead to errors in the final
-results.
+information that the chat provides.
 
 We have to remark that chatbots have limitations in fields that require
 specialized knowledge or experience, such as statistics or data
-analysis.
+analysis.😉
 
 ## Dataset
 
@@ -462,7 +464,7 @@ train_set <- read.csv("train.csv")
 
 ```
 
-```{r plot dataset, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
+```{r plot dataset, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE , echo = FALSE}
 
 # Plot --------------------------------------------------------------------
 colors <- c("Real Data" = "snow")
@@ -471,7 +473,7 @@ point_size <- 1.4
 ggplot() +
   geom_point(aes(x = train_set$x, y = train_set$y, color = 'Real Data'), size = point_size, shape=16) +
   theme_light() +
-  labs(x = "x", y = "y", color = "     Legend", title = 'Test set', shape = "", color="") +
+  labs(x = "x", y = "y", color = "     Legend", title = 'Train set', shape = "", color="") +
   guides(color = guide_legend(override.aes=list(shape = 16, size = 2))) +
   scale_color_manual(values = colors) +
   theme(panel.border = element_rect(color = "white"),
@@ -494,10 +496,10 @@ ggplot() +
 ## Vanilla Cross Validation
 
 In order to estimate the coefficients $\beta_j$ in our penalized linear
-model, we are going to perform a $k-fold$ cross validation.
+model, we are going to perform a *k-fold* cross validation.
 
 Since the variance of the response variable is not constant across the
-range of predictor variables it can be possible that , picking knots
+range of predictor variables it can be possible that, picking knots
 where the functions is very variable, may influence the good predictive
 performance of our model. In order to try to resolve this problem, we
 fix the lower bound of the position of the knots at $0$ and we add the
@@ -516,7 +518,7 @@ At the end of the day, we end up with $5$ hyperparameter to tune:
 -   $q$ the number of knots
 -   $p$ positions of the upper bound
 
-Since the data shown that for a higher $x$, the y are way more variable,
+Since the data shown that for a higher $x$, the $y$ are way more variable,
 in the train of our model, we will use into the model weights
 proportional to the variance given $x$.
 
@@ -648,7 +650,7 @@ names(best_params) <- c('d', 'q', 'k', 'alpha', 'lambda', 'position')
 After the vanilla cross validation this are the hyperparameters
 we obtained:
 
-```{r training with vanilla parameters, warning = FALSE}
+```{r training with vanilla parameters, warning = FALSE }
 load("RData//best_params_vanilla_NODC.RData")
 
 # Prediction --------------------------------------------------------------
@@ -670,15 +672,15 @@ hat_weights <- compute_weights(knots , train_set)
 final_model <- glmnet(M_train, train_set$y, family ="gaussian", 
                       alpha=a_best, lambda=l_best , weights = hat_weights )
 predictions <- predict(final_model,M_test)
-best_params
+round(best_params,3)
 ```
 
 After training the model with those hyperparameters and predicting the
 $Y$ in the test set, we can plot our results.
 
-```{r plot after vanilla, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
+```{r plot after vanilla, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center",echo = FALSE, message=FALSE, warning=FALSE}
 
-colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#B0413E", "Knots" = "#FFB238")
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#E09F20", "Knots" = "#006054")
 point_size <- 1.4
 knots_size <- 1
 knots_shape <- 18
@@ -711,11 +713,11 @@ ggplot() +
 
 ### Kaggle-LeaderBoard-Result: 3329.84561 in RMSE
 
-## Update the parameter
+## Update the parameters
 
-As anticipated before, after computing the k-fold cross validation, we
+As anticipated before, after computing the *k-fold* cross validation, we
 are going to select some new parameter, similar to the ones obtained
-from the validation, to test via Nested Cross Validation.
+from the validation, to be tuned via Nested Cross Validation.
 
 ```{r update parameter, warning=FALSE}
 # Update Parameters -------------------------------------------------------------
@@ -747,15 +749,15 @@ To apply the Nested Cross Validation the first thing we have to do is
 implement its main functions:
 
 -   **nested_crossval**, that takes as input the hyperparameters and the
-    data, inside this function we will iteratively select the k-folds
+    data, inside this function we will iteratively select the *k-folds*
     randomly, then for each of the folds we call the *inner_crossval*
     function (to obtain the vector $e^{(in)}$), train and test the model
     (to compute the vector $e^{(out)}$). After each iteration the
     function will store $e^{(in)}$ in the vector $es$ and compute the
     wanted quantities $(mean(e^{(in)})-mean(e^{(out)}))^2$ and
     $\frac{var(e^{(out)})}{len(fold)}$, to be stored in *a_list* and
-    *b_list* respectly. At the end the function will return an estimator
-    of the RMSE and one for the MSE of the cross-validation MSE.
+    *b_list* respectively. At the end the function will return an estimator
+    of the RMSE and its relative MSE.
 
 -   **inner_crossval**, takes as input $k-1$ out of the $k$ folds
     created in the previous function and compute the cross validation on
@@ -912,9 +914,9 @@ $$
 $$
 
 For each combination tested, the following plot show the estimated RMSE
-with the $1 - \alpha$ confidence interval associated.
+with the $1 - \alpha = 95\%$ confidence interval associated.
 
-```{r plot err with mse CI, fig.showtext = TRUE, fig.height = 5, fig.width = 8, fig.align = "center", message=FALSE, warning=FALSE}
+```{r plot err with mse CI, fig.showtext = TRUE, fig.height = 5, echo = FALSE,fig.width = 8, fig.align = "center", message=FALSE, warning=FALSE}
 mse_err <- read.csv("RData/Nested_NODC.csv")
 mse <- mse_err$mse
 err <- mse_err$err
@@ -945,6 +947,10 @@ ggplot()+
 
 ```
 
+## Comments:
+
+Since the plot shown that all combination of hyperparameters have similar $\widehat{RMSE}$, the decision we made to select the best configuration is taking into account the width of the interval. At the end we decided to select the configutations that minimize the $\widehat{MSE}$. The hyperparameters we have selected are shown below.  
+
 ```{r training with nested parameters, warning = FALSE}
 load("RData//best_params_NODC.RData")
 # Prediction --------------------------------------------------------------
@@ -966,12 +972,12 @@ hat_weights <- compute_weights(knots , train_set)
 final_model <- glmnet(M_train, train_set$y, family ="gaussian", 
                       alpha=a_best, lambda=l_best , weights = hat_weights )
 predictions <- predict(final_model, M_test)
-best_params
+round(best_params,3)
 ```
 
-```{r plot after nested, fig.showtext = TRUE, fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
+```{r plot after nested, fig.showtext = TRUE, echo = FALSE,fig.height = 5, fig.width = 10, fig.align = "center", message=FALSE, warning=FALSE}
 
-colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#B0413E", "Knots" = "#FFB238")
+colors <- c("Real Data" = "#F1F1E6", "Predicted" = "#E09F20", "Knots" = "#006054")
 point_size <- 1.4
 knots_size <- 1
 knots_shape <- 18
@@ -1007,8 +1013,8 @@ ggplot() +
 # Conclusion & Final Remark
 
 In conclusion, the use of splines for regression can be a powerful tool
-for modeling nonlinear relationships between variable. Thanks to the use
+for modeling nonlinear relationships between variables. Thanks to the use
 of truncated power basis functions, the splines can effectively capture
 the complex structure of the relations which can exist between the
-variables $X$ and $Y$, without using a high degree polynomial which it
+variables $X$ and $Y$ without using a high degree polynomial which it
 will lead a more accurate and flexible model.
