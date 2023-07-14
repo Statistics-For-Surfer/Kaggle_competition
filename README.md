@@ -10,7 +10,7 @@ This repository contains the first homework project of Statistical Learningdurin
 
 The goal of the project is to estimate an unknown function $f(X)$
  in order to predict the response variable $Y$
- from independent data $(X1,Y1)…,(Xn,Yn)$ via spline regression model
+ from independent data $(X_1,Y_1)…,(X_n,Y_n)$ via spline regression model
 ### *Authors*:
 * Paolo Barba
 * Matteo Candi
